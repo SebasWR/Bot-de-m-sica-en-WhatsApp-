@@ -67,14 +67,14 @@ Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una d
 | `!tateti [@rival \| bot] [facil\|normal\|dificil]` | `!ttt`, `!gato`, `!3enraya` | Tres en raya. En grupo: `@rival` lo reta, `bot` juega contra el bot, sin nada es un reto abierto. En privado siempre contra el bot |
 | `!4enraya [@rival \| bot] [nivel]` | `!conecta4`, `!c4` | 4 en raya (columnas 1–7), mismo sistema de retos |
 | `!aceptar` / `!rechazar` | `!si` / `!no` | Acepta o rechaza un reto pendiente |
-| `!ahorcado [palabra]` | `!hangman` | Adivinen la palabra entre todos; con una palabra se arriesga la respuesta |
+| `!ahorcado [palabra]` | `!hangman` | Adivinen la palabra entre todos: una letra por mensaje, o la palabra entera directamente cuando la sepan |
 | `!trivia` | `!pregunta`, `!quiz` | Pregunta con 4 opciones; un intento por persona, gana el primero que acierta |
 | `!adivina` | `!numero` | Número secreto del 1 al 100, 8 intentos entre todos con pistas |
 | `!ppt <piedra\|papel\|tijera>` | `!rps` | Piedra, papel o tijera contra el bot |
 | `!rendirse` | `!salir`, `!saltar` | Termina la partida actual del chat |
 | `!puntos [juego]` | `!puntaje`, `!tabla` | Ranking de victorias del chat (todos los juegos o uno) |
 
-**Cómo se juega:** después de empezar una partida se responde en el chat sin prefijo: un número para tateti, 4 en raya y adivina; una letra para el ahorcado; `A`–`D` para la trivia. Solo hay una partida por chat y se cancela sola tras 15 minutos sin jugadas. Las victorias se guardan en SQLite por chat.
+**Cómo se juega:** después de empezar una partida se responde en el chat sin prefijo: un número para tateti, 4 en raya y adivina; una letra (o la palabra entera) para el ahorcado; `A`–`D` para la trivia. Solo hay una partida por chat y se cancela sola tras 15 minutos sin jugadas. Las victorias se guardan en SQLite por chat.
 
 ### 🎲 Diversión
 

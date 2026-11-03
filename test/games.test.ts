@@ -276,6 +276,19 @@ test('ahorcado: letras por chat, palabra con el comando, y charla ignorada', asy
   assert.equal(db.getGameRanking(GROUP)[0]?.user_jid, CARLA);
 });
 
+test('ahorcado: la palabra se puede mandar directo en el chat', async () => {
+  const { send, last, games } = setup({ rng: seq(0) });
+  await send(ANA, '!ahorcado');
+  const word = (games.active(GROUP) as unknown as { game: Hangman }).game.word;
+  const wrong = 'x'.repeat([...word].length);
+  await send(BETO, wrong);
+  assert.match(last(), /No es/, 'una palabra del mismo largo cuenta como intento');
+  assert.equal(await send(BETO, 'xx'), false, 'palabras de otro largo se ignoran');
+  await send(CARLA, word.toUpperCase());
+  assert.match(last(), /@333 adivinó/);
+  assert.equal(games.active(GROUP), undefined);
+});
+
 test('trivia: un intento por persona y gana el primero que acierta', async () => {
   const { send, last, games } = setup();
   await send(ANA, '!trivia');

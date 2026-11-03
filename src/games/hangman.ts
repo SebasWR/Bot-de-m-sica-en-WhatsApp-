@@ -92,8 +92,11 @@ export class HangmanGame implements ChatGame {
       }
       return this.afterGuess(ctx, result === 'hit' ? '✅ ¡Bien!' : `❌ No hay *${trimmed.toUpperCase()}*.`);
     }
-    // Arriesgar palabra solo con el comando, para no contar charla normal como intento.
-    if (explicit && /^[\p{L}]+$/u.test(trimmed)) {
+    // Arriesgar la palabra: con el comando, o escribiéndola directamente en el chat.
+    // Sin comando solo cuenta si tiene el mismo largo que la palabra, para no tomar
+    // la charla normal ("jaja", "qué difícil") como intento fallido.
+    const sameLength = [...trimmed].length === [...this.game.word].length;
+    if (/^[\p{L}]+$/u.test(trimmed) && (explicit || sameLength)) {
       const ok = this.game.guessWord(trimmed);
       return this.afterGuess(ctx, ok ? '' : `❌ No es *${trimmed}*.`);
     }
@@ -130,7 +133,7 @@ export class HangmanGame implements ChatGame {
         `${this.label} · Pista: _${this.category}_\n\n` +
         `\`${g.masked()}\`\n\n` +
         `${STAGES[g.mistakes]} Vidas: ${'❤️'.repeat(MAX_MISTAKES - g.mistakes)}${'🖤'.repeat(g.mistakes)}${wrong}\n\n` +
-        `Escribe una letra, o *${this.prefix}ahorcado <palabra>* para arriesgar.`,
+        `Escribe una letra, o la palabra entera si ya la sabes.`,
     };
   }
 }
