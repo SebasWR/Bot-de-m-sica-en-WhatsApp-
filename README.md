@@ -84,7 +84,7 @@ Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una d
 | `!moneda` | `!coin`, `!flip` | Cara o cruz |
 | `!bola <pregunta>` | `!8ball` | La bola mágica responde |
 | `!elegir a, b o c` | `!elige` | El bot elige por ti |
-| `!ship @a @b` o `!ship Ana y Juan` | `!amor` | Porcentaje de compatibilidad (siempre el mismo para la misma pareja) |
+| `!amor @a @b`, `!amor @a` o `!amor Ana y Juan` | `!ship`, `!love` | % de amor entre dos personas (siempre el mismo para la misma pareja) |
 
 ### ⚙️ General
 

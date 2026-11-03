@@ -334,10 +334,17 @@ test('ppt, dado, moneda, bola, elegir y ship responden', async () => {
   assert.match(last(), /🎱/);
   await send(ANA, '!elegir pizza o tacos');
   assert.match(last(), /\*pizza\*/);
-  await send(ANA, '!ship @222 @333', [BETO, CARLA]);
-  assert.match(last(), /@222 \+ @333/);
+  await send(ANA, '!amor @222 @333', [BETO, CARLA]);
+  assert.match(last(), /@222 ❤️ @333.*\d+% de amor/s);
+  const first = last();
+  await send(ANA, '!amor @333 @222', [CARLA, BETO]);
+  assert.equal(last().match(/\d+%/)?.[0], first.match(/\d+%/)?.[0], 'mismo % sin importar el orden');
+  await send(ANA, '!amor @222', [BETO]);
+  assert.match(last(), /@111 ❤️ @222/);
   await send(ANA, '!ship Ana y Juan');
-  assert.match(last(), /Ana \+ Juan.*\d+%/s);
+  assert.match(last(), /Ana ❤️ Juan.*\d+% de amor/s);
+  await send(ANA, '!amor');
+  assert.match(last(), /Uso:/);
 });
 
 test('!ayuda muestra secciones y !juegos solo los juegos', async () => {

@@ -96,11 +96,11 @@ export const chooseCommand: Command = {
   },
 };
 
-export const shipCommand: Command = {
-  name: 'ship',
-  aliases: ['amor', 'compatibilidad', 'love'],
+export const loveCommand: Command = {
+  name: 'amor',
+  aliases: ['ship', 'compatibilidad', 'love'],
   category: 'diversion',
-  description: 'Mide la compatibilidad entre dos personas',
+  description: 'Calcula el % de amor entre dos personas',
   usage: '<@persona1 @persona2 | nombre1 y nombre2>',
   async execute(ctx) {
     const mentions = (ctx.mentions ?? []).slice(0, 2);
@@ -123,10 +123,10 @@ export const shipCommand: Command = {
       }
     }
     if (!pair) {
-      await ctx.reply(`Uso: *${ctx.prefix}ship @persona1 @persona2* o *${ctx.prefix}ship Ana y Juan* 💘`);
+      await ctx.reply(`Uso: *${ctx.prefix}amor @persona1 @persona2*, *${ctx.prefix}amor @persona* (tú y esa persona) o *${ctx.prefix}amor Ana y Juan* 💘`);
       return;
     }
     const p = shipPercent(pair[0], pair[1]);
-    await ctx.reply(`💘 ${display[0]} + ${display[1]}\n\n${loveBar(p)} *${p}%*\n${shipVerdict(p)}`, tagged);
+    await ctx.reply(`💘 *Medidor de amor*\n\n${display[0]} ❤️ ${display[1]}\n\n${loveBar(p)}\n*${p}% de amor*\n\n${shipVerdict(p)}`, tagged);
   },
 };
