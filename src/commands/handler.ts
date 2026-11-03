@@ -7,8 +7,30 @@ import type { CommandContext } from './types.js';
 export type IncomingContext = Omit<CommandContext, 'invokedAs' | 'args' | 'text' | 'prefix'>;
 
 /**
+ * Mensaje normal (sin prefijo): si hay una partida en el chat, se lo pasa
+ * (p. ej. "5" en el tateti o "a" en el ahorcado). Devuelve true si el juego lo usó.
+ */
+async function handleGameText(rawText: string, base: IncomingContext): Promise<boolean> {
+  const { games, db } = base.services;
+  const game = games.active(base.chatJid);
+  if (!game) return false;
+  try {
+    const consumed = await game.onText(rawText, base, false);
+    if (consumed) {
+      games.touch(base.chatJid);
+      db.touchUser(base.senderJid, base.senderName);
+    }
+    return consumed;
+  } catch (err) {
+    logger.error({ err, game: game.id }, 'Error en juego');
+    return false;
+  }
+}
+
+/**
  * Recibe el texto de un mensaje y, si es un comando, lo ejecuta.
- * Devuelve true si el mensaje era un comando conocido.
+ * Si no es un comando pero hay una partida activa en el chat, se lo pasa al juego.
+ * Devuelve true si el mensaje se procesó.
  */
 export async function handleText(
   registry: CommandRegistry,
@@ -16,7 +38,7 @@ export async function handleText(
   base: IncomingContext,
 ): Promise<boolean> {
   const parsed = parseCommand(rawText, config.prefix);
-  if (!parsed) return false;
+  if (!parsed) return handleGameText(rawText, base);
 
   const command = registry.get(parsed.name);
   if (!command) {

@@ -1,5 +1,6 @@
 import path from 'node:path';
 import type { WASocket, WAMessage } from 'baileys';
+import { GameManager } from './games/manager.js';
 import { createRegistry } from './commands/index.js';
 import { handleText } from './commands/handler.js';
 import { config } from './config.js';
@@ -9,7 +10,7 @@ import { MusicService } from './services/music.js';
 import { BotState } from './state.js';
 import { logger } from './utils/logger.js';
 import { connectToWhatsApp } from './whatsapp/connection.js';
-import { extractText, isGroupJid, senderOf } from './whatsapp/message.js';
+import { extractMentions, extractText, isGroupJid, senderOf } from './whatsapp/message.js';
 
 const db = new BotDatabase(path.join(config.dataDir, 'bot.sqlite'));
 const services = {
@@ -17,6 +18,7 @@ const services = {
   music: new MusicService(),
   audio: new AudioService(),
   state: new BotState(),
+  games: new GameManager(),
 };
 const registry = createRegistry();
 
@@ -33,9 +35,10 @@ async function onMessage(sock: WASocket, msg: WAMessage): Promise<void> {
     senderJid,
     senderName: msg.pushName ?? null,
     isGroup: isGroupJid(chatJid),
+    mentions: extractMentions(msg),
     services,
-    reply: async (body) => {
-      await sock.sendMessage(chatJid, { text: body }, { quoted: msg });
+    reply: async (body, mentions) => {
+      await sock.sendMessage(chatJid, { text: body, mentions }, { quoted: msg });
     },
     react: async (emoji) => {
       await sock.sendMessage(chatJid, { react: { text: emoji, key: msg.key } });

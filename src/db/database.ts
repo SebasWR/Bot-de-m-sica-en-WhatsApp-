@@ -31,6 +31,16 @@ export interface NewHistoryEntry {
   duration: number | null;
 }
 
+export type GameResult = 'win' | 'loss' | 'draw';
+
+export interface GameRankingRow {
+  user_jid: string;
+  name: string | null;
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
 export interface TopSong {
   title: string;
   url: string;
@@ -61,6 +71,16 @@ const MIGRATIONS: string[] = [
    CREATE TABLE IF NOT EXISTS settings (
      key   TEXT PRIMARY KEY,
      value TEXT NOT NULL
+   );`,
+  // v2: puntos de los juegos (por chat, usuario y juego)
+  `CREATE TABLE IF NOT EXISTS game_scores (
+     chat_jid TEXT NOT NULL,
+     user_jid TEXT NOT NULL,
+     game     TEXT NOT NULL,
+     wins     INTEGER NOT NULL DEFAULT 0,
+     losses   INTEGER NOT NULL DEFAULT 0,
+     draws    INTEGER NOT NULL DEFAULT 0,
+     PRIMARY KEY (chat_jid, user_jid, game)
    );`,
 ];
 
@@ -140,6 +160,35 @@ export class BotDatabase {
          GROUP BY url ORDER BY plays DESC, MAX(id) DESC LIMIT ?`,
       )
       .all(limit) as TopSong[];
+  }
+
+  /** Suma una victoria, derrota o empate a un usuario en un juego de un chat. */
+  addGameResult(chatJid: string, userJid: string, game: string, result: GameResult): void {
+    const [w, l, d] = result === 'win' ? [1, 0, 0] : result === 'loss' ? [0, 1, 0] : [0, 0, 1];
+    this.db
+      .prepare(
+        `INSERT INTO game_scores (chat_jid, user_jid, game, wins, losses, draws) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(chat_jid, user_jid, game) DO UPDATE SET
+           wins = wins + excluded.wins,
+           losses = losses + excluded.losses,
+           draws = draws + excluded.draws`,
+      )
+      .run(chatJid, userJid, game, w, l, d);
+  }
+
+  /** Ranking de un chat sumando todos los juegos (o solo uno si se indica). */
+  getGameRanking(chatJid: string, limit = 10, game?: string): GameRankingRow[] {
+    return this.db
+      .prepare(
+        `SELECT s.user_jid AS user_jid, u.name AS name,
+                SUM(s.wins) AS wins, SUM(s.losses) AS losses, SUM(s.draws) AS draws
+         FROM game_scores s LEFT JOIN users u ON u.jid = s.user_jid
+         WHERE s.chat_jid = ? AND (? IS NULL OR s.game = ?)
+         GROUP BY s.user_jid
+         ORDER BY wins DESC, losses ASC, s.user_jid ASC
+         LIMIT ?`,
+      )
+      .all(chatJid, game ?? null, game ?? null, limit) as unknown as GameRankingRow[];
   }
 
   getSetting(key: string): string | undefined {

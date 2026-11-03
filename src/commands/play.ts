@@ -6,6 +6,7 @@ import type { Command } from './types.js';
 
 export const playCommand: Command = {
   name: 'play',
+  category: 'musica',
   aliases: ['p', 'musica', 'cancion'],
   description: 'Descarga una canción y la envía como audio (acepta búsqueda, URL o número de !buscar)',
   usage: '<canción | URL | número>',

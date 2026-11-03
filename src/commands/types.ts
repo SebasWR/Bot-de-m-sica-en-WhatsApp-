@@ -1,4 +1,5 @@
 import type { BotDatabase } from '../db/database.js';
+import type { GameManager } from '../games/manager.js';
 import type { AudioService } from '../services/audio.js';
 import type { MusicService } from '../services/music.js';
 import type { BotState } from '../state.js';
@@ -8,6 +9,7 @@ export interface Services {
   music: MusicService;
   audio: AudioService;
   state: BotState;
+  games: GameManager;
 }
 
 export interface AudioPayload {
@@ -25,6 +27,8 @@ export interface CommandContext {
   senderJid: string;
   senderName: string | null;
   isGroup: boolean;
+  /** JIDs mencionados con @ en el mensaje. */
+  mentions?: string[];
   /** Nombre del comando tal como lo escribió el usuario (puede ser un alias). */
   invokedAs: string;
   args: string[];
@@ -32,13 +36,18 @@ export interface CommandContext {
   text: string;
   prefix: string;
   services: Services;
-  reply(text: string): Promise<void>;
+  /** Responde en el chat. Los JIDs de `mentions` se muestran como @etiquetas. */
+  reply(text: string, mentions?: string[]): Promise<void>;
   react(emoji: string): Promise<void>;
   sendAudio(audio: AudioPayload): Promise<void>;
 }
 
+export type CommandCategory = 'musica' | 'juegos' | 'diversion' | 'general';
+
 export interface Command {
   name: string;
+  /** Sección en la que aparece en !ayuda (por defecto "general"). */
+  category?: CommandCategory;
   aliases?: string[];
   description: string;
   usage?: string;

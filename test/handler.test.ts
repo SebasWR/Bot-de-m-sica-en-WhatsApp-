@@ -6,6 +6,7 @@ import { BotDatabase } from '../src/db/database.js';
 import type { AudioService } from '../src/services/audio.js';
 import type { MusicService, Track } from '../src/services/music.js';
 import { BotState } from '../src/state.js';
+import { GameManager } from '../src/games/manager.js';
 
 const song: Track = { id: 'abc', title: 'Canción de prueba', url: 'https://youtu.be/abc', duration: 180, uploader: 'Artista' };
 const longSong: Track = { ...song, id: 'long', title: 'Mix de 2 horas', duration: 7200 };
@@ -29,7 +30,7 @@ function setup() {
     senderJid: 'user@s.whatsapp.net',
     senderName: 'Tester',
     isGroup: false,
-    services: { db, music, audio, state: new BotState() },
+    services: { db, music, audio, state: new BotState(), games: new GameManager() },
     reply: async (t) => void replies.push(t),
     react: async () => {},
     sendAudio: async (a) => void audios.push(a.file),
