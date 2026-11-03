@@ -6,11 +6,15 @@ Bot de WhatsApp para buscar, convertir y enviar música directamente desde el ch
 
 ### Requisitos
 
-- Node.js 22 o superior
+- Node.js 22.13 o superior (usa `node:sqlite`, que viene incluido)
 - [FFmpeg](https://ffmpeg.org/) (convierte el audio a OGG/Opus)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) (busca y descarga la música)
 
 O simplemente Docker, que ya trae todo.
+
+### 📱 En el celular (Android, sin PC)
+
+Mirá [TERMUX.md](TERMUX.md): se instala con una línea en Termux y se prende/apaga con un botón en la pantalla de inicio.
 
 ### Con Docker (recomendado para VPS)
 
