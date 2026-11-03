@@ -1,6 +1,7 @@
 import type { BotDatabase } from '../db/database.js';
 import type { GameManager } from '../games/manager.js';
 import type { AudioService } from '../services/audio.js';
+import type { GifService } from '../services/gifs.js';
 import type { MusicService } from '../services/music.js';
 import type { BotState } from '../state.js';
 
@@ -10,6 +11,14 @@ export interface Services {
   audio: AudioService;
   state: BotState;
   games: GameManager;
+  gifs: GifService;
+}
+
+export interface GifPayload {
+  /** MP4 que WhatsApp reproduce en bucle como GIF. */
+  file: string;
+  caption?: string;
+  mentions?: string[];
 }
 
 export interface AudioPayload {
@@ -40,6 +49,7 @@ export interface CommandContext {
   reply(text: string, mentions?: string[]): Promise<void>;
   react(emoji: string): Promise<void>;
   sendAudio(audio: AudioPayload): Promise<void>;
+  sendGif(gif: GifPayload): Promise<void>;
 }
 
 export type CommandCategory = 'musica' | 'juegos' | 'diversion' | 'general';

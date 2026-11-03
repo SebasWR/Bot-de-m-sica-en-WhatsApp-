@@ -20,6 +20,8 @@ import { TicTacToe } from '../src/games/tictactoe.js';
 import { TriviaGame } from '../src/games/trivia.js';
 import type { AudioService } from '../src/services/audio.js';
 import type { MusicService } from '../src/services/music.js';
+import type { GifService } from '../src/services/gifs.js';
+import { buildGifToMp4Args } from '../src/services/gifs.js';
 import { BotState } from '../src/state.js';
 
 const ANA = '111@s.whatsapp.net';
@@ -42,8 +44,10 @@ function setup(opts: { rng?: () => number; isGroup?: boolean } = {}) {
     games,
     state: new BotState(),
     music: {} as MusicService,
-    audio: {} as AudioService,
+    audio: { cleanup: async () => {} } as unknown as AudioService,
+    gifs: { randomGifMp4: async (a: string) => (a === 'kiss' ? null : '/tmp/hug.mp4') } as unknown as GifService,
   };
+  const gifs: { file: string; caption?: string; mentions?: string[] }[] = [];
   const isGroup = opts.isGroup ?? true;
   const send = (from: string, text: string, mentions: string[] = []) => {
     const base: IncomingContext = {
@@ -56,12 +60,13 @@ function setup(opts: { rng?: () => number; isGroup?: boolean } = {}) {
       reply: async (t, m) => void replies.push({ text: t, mentions: m, from }),
       react: async () => {},
       sendAudio: async () => {},
+      sendGif: async (g) => void gifs.push(g),
     };
     return handleText(registry, text, base);
   };
   const registry = createRegistry();
   const last = () => replies.at(-1)?.text ?? '';
-  return { send, replies, last, db, games };
+  return { send, replies, last, db, games, gifs };
 }
 
 // ── Lógica pura ────────────────────────────────────────────────────────
@@ -356,6 +361,19 @@ test('ppt, dado, moneda, bola, elegir y ship responden', async () => {
   assert.equal(last(), mine, 'misma medida en el mismo día');
   await send(ANA, '!memide @222', [BETO]);
   assert.match(last(), /@222 le mide/);
+});
+
+test('!abrazo y !beso mandan GIF con menciones (o texto si no hay GIF)', async () => {
+  const { send, last, gifs } = setup();
+  await send(ANA, '!abrazo @222', [BETO]);
+  assert.deepEqual(gifs.at(-1), { file: '/tmp/hug.mp4', caption: '🤗 @111 abrazó a @222', mentions: [ANA, BETO] });
+  await send(ANA, '!abrazo');
+  assert.match(gifs.at(-1)!.caption!, /para todos/);
+  await send(ANA, '!beso');
+  assert.match(last(), /¿A quién\?/);
+  await send(ANA, '!beso @333', [CARLA]);
+  assert.match(last(), /@111 le dio un beso a @333.*No pude conseguir el GIF/s, 'sin API responde con texto');
+  assert.ok(buildGifToMp4Args('a.gif', 'b.mp4').includes('yuv420p'));
 });
 
 test('!ayuda muestra secciones y !juegos solo los juegos', async () => {

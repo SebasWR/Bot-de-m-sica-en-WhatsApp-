@@ -6,6 +6,7 @@ import { handleText } from './commands/handler.js';
 import { config } from './config.js';
 import { BotDatabase } from './db/database.js';
 import { AudioService } from './services/audio.js';
+import { GifService } from './services/gifs.js';
 import { MusicService } from './services/music.js';
 import { BotState } from './state.js';
 import { logger } from './utils/logger.js';
@@ -19,6 +20,7 @@ const services = {
   audio: new AudioService(),
   state: new BotState(),
   games: new GameManager(),
+  gifs: new GifService(),
 };
 const registry = createRegistry();
 
@@ -49,6 +51,9 @@ async function onMessage(sock: WASocket, msg: WAMessage): Promise<void> {
         { audio: { url: file }, mimetype: 'audio/ogg; codecs=opus', ptt: voiceNote },
         { quoted: msg },
       );
+    },
+    sendGif: async ({ file, caption, mentions }) => {
+      await sock.sendMessage(chatJid, { video: { url: file }, gifPlayback: true, caption, mentions }, { quoted: msg });
     },
   });
 }

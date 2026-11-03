@@ -15,6 +15,7 @@ import {
   type Hand,
 } from '../games/fun.js';
 import { pick } from '../games/random.js';
+import type { AnimeAction } from '../services/gifs.js';
 import { tag } from '../games/text.js';
 import type { Command } from './types.js';
 
@@ -151,3 +152,68 @@ export const measureCommand: Command = {
     );
   },
 };
+
+function animeGifCommand(opts: {
+  name: string;
+  aliases: string[];
+  description: string;
+  action: AnimeAction;
+  emoji: string;
+  /** Texto con alguien etiquetado. */
+  toSomeone: (from: string, to: string) => string;
+  /** Texto sin etiquetar a nadie; null = la @mención es obligatoria. */
+  toEveryone: ((from: string) => string) | null;
+  kaomoji: string;
+}): Command {
+  return {
+    name: opts.name,
+    aliases: opts.aliases,
+    category: 'diversion',
+    description: opts.description,
+    usage: opts.toEveryone ? '[@persona]' : '<@persona>',
+    async execute(ctx) {
+      const from = ctx.senderJid;
+      const to = ctx.mentions?.find((j) => j !== from);
+      if (!to && !opts.toEveryone) {
+        await ctx.reply(`¿A quién? Etiquétalo: *${ctx.prefix}${opts.name} @persona* ${opts.emoji}`);
+        return;
+      }
+      const caption = to ? opts.toSomeone(tag(from), tag(to)) : opts.toEveryone!(tag(from));
+      const mentions = to ? [from, to] : [from];
+
+      await ctx.react(opts.emoji);
+      const file = await ctx.services.gifs.randomGifMp4(opts.action).catch(() => null);
+      if (!file) {
+        await ctx.reply(`${caption} ${opts.kaomoji}\n_No pude conseguir el GIF esta vez._`, mentions);
+        return;
+      }
+      try {
+        await ctx.sendGif({ file, caption, mentions });
+      } finally {
+        await ctx.services.audio.cleanup(file).catch(() => undefined);
+      }
+    },
+  };
+}
+
+export const hugCommand = animeGifCommand({
+  name: 'abrazo',
+  aliases: ['abrazar', 'hug'],
+  description: 'Manda un GIF de abrazo de anime (a alguien o a todos)',
+  action: 'hug',
+  emoji: '🤗',
+  toSomeone: (a, b) => `🤗 ${a} abrazó a ${b}`,
+  toEveryone: (a) => `🤗 ${a} reparte abrazos para todos`,
+  kaomoji: '(っ˘̩╭╮˘̩)っ',
+});
+
+export const kissCommand = animeGifCommand({
+  name: 'beso',
+  aliases: ['besar', 'kiss'],
+  description: 'Manda un beso con un GIF de anime a quien etiquetes',
+  action: 'kiss',
+  emoji: '😘',
+  toSomeone: (a, b) => `😘 ${a} le dio un beso a ${b}`,
+  toEveryone: null,
+  kaomoji: '(˘³˘)♥',
+});

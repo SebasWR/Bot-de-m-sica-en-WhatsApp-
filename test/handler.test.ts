@@ -30,10 +30,11 @@ function setup() {
     senderJid: 'user@s.whatsapp.net',
     senderName: 'Tester',
     isGroup: false,
-    services: { db, music, audio, state: new BotState(), games: new GameManager() },
+    services: { db, music, audio, state: new BotState(), games: new GameManager(), gifs: {} as never },
     reply: async (t) => void replies.push(t),
     react: async () => {},
     sendAudio: async (a) => void audios.push(a.file),
+    sendGif: async () => {},
   };
   return { base, replies, audios, cleaned, db, registry: createRegistry() };
 }
