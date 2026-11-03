@@ -11,6 +11,7 @@ Bajá estas tres apps **desde F-Droid** (https://f-droid.org) — tienen que ven
 1. **Termux**
 2. **Termux:Widget** (los botones de prender/apagar)
 3. **Termux:API** (para que el aviso "Bot prendido" aparezca en pantalla)
+4. **Termux:Boot** (opcional: prende el bot solo cuando se reinicia el celular). Abrila una vez después de instalarla.
 
 Después, en Ajustes de Android → Apps → **Termux** → Batería → **Sin restricciones** (para que Android no lo mate).
 
@@ -47,7 +48,7 @@ Agregá el widget: mantené apretada la pantalla de inicio → **Widgets** → *
 | **Bot - apagar** | Lo apaga |
 | **Bot - ver** | Muestra la consola (salís con `Ctrl+B`, `D`) |
 
-Si el bot se cae, se reinicia solo. Si reiniciás el celular, apretá **Bot - prender** de nuevo (no hace falta volver a vincular).
+Si el bot se cae, se reinicia solo. Si reiniciás el celular y tenés **Termux:Boot**, el bot se prende solo; si no, apretá **Bot - prender** (no hace falta volver a vincular).
 
 También se puede desde Termux escribiendo `bash ~/bot-musica/termux/prender.sh` (o `apagar.sh`, `ver.sh`).
 

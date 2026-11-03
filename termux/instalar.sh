@@ -50,6 +50,15 @@ SH
 done
 chmod +x termux/*.sh
 
+# Con la app Termux:Boot, el bot se prende solo cuando se reinicia el celular
+mkdir -p "$HOME/.termux/boot"
+cat > "$HOME/.termux/boot/prender-bot" <<SH
+#!/data/data/com.termux/files/usr/bin/bash
+termux-wake-lock
+bash "$BOT_DIR/termux/prender.sh"
+SH
+chmod +x "$HOME/.termux/boot/prender-bot"
+
 echo
 echo "✅ Listo. Para prender el bot escribí:   bash ~/bot-musica/termux/prender.sh"
 echo "   Para ver el código de vinculación:   bash ~/bot-musica/termux/ver.sh"
