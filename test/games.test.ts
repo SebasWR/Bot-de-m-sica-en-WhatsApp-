@@ -10,6 +10,7 @@ import {
   parseHand,
   rollDice,
   rpsResult,
+  measureCm,
   shipPercent,
 } from '../src/games/fun.js';
 import { Hangman } from '../src/games/hangman.js';
@@ -169,6 +170,9 @@ test('utilidades: fold, tag, dados, ppt, elegir y ship', () => {
   assert.deepEqual(parseChoices('pizza, sushi o tacos'), ['pizza', 'sushi', 'tacos']);
   assert.equal(shipPercent('Ana', 'Juan'), shipPercent('juan', 'ána'), 'el orden y las tildes no importan');
   assert.ok(shipPercent('a', 'b') >= 0 && shipPercent('a', 'b') <= 100);
+  const cms = ['a', 'b', 'c', 'd', 'e'].flatMap((w) => ['2026-01-01', '2026-01-02'].map((d) => measureCm(w, d)));
+  assert.ok(cms.every((c) => c >= 1 && c <= 30));
+  assert.equal(measureCm('x', '2026-01-01'), measureCm('x', '2026-01-01'));
 });
 
 test('GameManager caduca partidas inactivas', () => {
@@ -345,6 +349,13 @@ test('ppt, dado, moneda, bola, elegir y ship responden', async () => {
   assert.match(last(), /Ana ❤️ Juan.*\d+% de amor/s);
   await send(ANA, '!amor');
   assert.match(last(), /Uso:/);
+  await send(ANA, '!memide');
+  const mine = last();
+  assert.match(mine, /@111 le mide \*\d+ cm\*/);
+  await send(ANA, '!memide');
+  assert.equal(last(), mine, 'misma medida en el mismo día');
+  await send(ANA, '!memide @222', [BETO]);
+  assert.match(last(), /@222 le mide/);
 });
 
 test('!ayuda muestra secciones y !juegos solo los juegos', async () => {

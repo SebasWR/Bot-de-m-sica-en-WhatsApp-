@@ -1,4 +1,4 @@
-import { chooseCommand, coinCommand, diceCommand, eightBallCommand, rpsCommand, loveCommand } from './fun.js';
+import { measureCommand, chooseCommand, coinCommand, diceCommand, eightBallCommand, rpsCommand, loveCommand } from './fun.js';
 import {
   acceptCommand,
   connect4Command,
@@ -43,6 +43,7 @@ export function createRegistry(): CommandRegistry {
     .register(coinCommand)
     .register(eightBallCommand)
     .register(chooseCommand)
-    .register(loveCommand);
+    .register(loveCommand)
+    .register(measureCommand);
   return registry;
 }

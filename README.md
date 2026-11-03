@@ -85,6 +85,7 @@ Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una d
 | `!bola <pregunta>` | `!8ball` | La bola mágica responde |
 | `!elegir a, b o c` | `!elige` | El bot elige por ti |
 | `!amor @a @b`, `!amor @a` o `!amor Ana y Juan` | `!ship`, `!love` | % de amor entre dos personas (siempre el mismo para la misma pareja) |
+| `!memide [@persona]` | `!medir`, `!cm` | Los cm de 🍆 de quien escribe o de la persona etiquetada (cambia cada día) |
 
 ### ⚙️ General
 

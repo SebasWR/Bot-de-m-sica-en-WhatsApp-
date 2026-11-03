@@ -2,6 +2,9 @@ import {
   HAND_EMOJI,
   eightBall,
   loveBar,
+  measureBar,
+  measureCm,
+  measureVerdict,
   parseChoices,
   parseDice,
   parseHand,
@@ -128,5 +131,23 @@ export const loveCommand: Command = {
     }
     const p = shipPercent(pair[0], pair[1]);
     await ctx.reply(`💘 *Medidor de amor*\n\n${display[0]} ❤️ ${display[1]}\n\n${loveBar(p)}\n*${p}% de amor*\n\n${shipVerdict(p)}`, tagged);
+  },
+};
+
+export const measureCommand: Command = {
+  name: 'memide',
+  aliases: ['medir', 'cm'],
+  category: 'diversion',
+  description: 'Mide los cm de 🍆 de alguien (cambia cada día)',
+  usage: '[@persona]',
+  async execute(ctx) {
+    const target = ctx.mentions?.[0] ?? ctx.senderJid;
+    const day = new Date().toISOString().slice(0, 10);
+    const cm = measureCm(target, day);
+    const who = `A ${tag(target)} le`;
+    await ctx.reply(
+      `📏 *Medidor oficial* 🍆\n\n${who} mide *${cm} cm*\n${measureBar(cm)}\n\n${measureVerdict(cm)}\n_Medida válida por hoy._`,
+      [target],
+    );
   },
 };

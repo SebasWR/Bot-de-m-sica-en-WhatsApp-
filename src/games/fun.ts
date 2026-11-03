@@ -71,15 +71,40 @@ export function parseChoices(text: string): string[] {
 
 // ── Compatibilidad ("ship") ────────────────────────────────────────────
 
-/** Porcentaje estable para un par (el orden no importa): siempre da lo mismo para las mismas dos personas. */
-export function shipPercent(a: string, b: string): number {
-  const key = [fold(a.trim()), fold(b.trim())].sort().join('❤');
+/** Hash FNV-1a: el mismo texto siempre da el mismo número. */
+export function stableHash(text: string): number {
   let h = 2166136261;
-  for (const ch of key) {
+  for (const ch of text) {
     h ^= ch.codePointAt(0)!;
     h = Math.imul(h, 16777619);
   }
-  return (h >>> 0) % 101;
+  return h >>> 0;
+}
+
+/** Porcentaje estable para un par (el orden no importa): siempre da lo mismo para las mismas dos personas. */
+export function shipPercent(a: string, b: string): number {
+  const key = [fold(a.trim()), fold(b.trim())].sort().join('❤');
+  return stableHash(key) % 101;
+}
+
+// ── !memide ────────────────────────────────────────────────────────────
+
+/** Medida "oficial" del día para una persona: igual todo el día, cambia al siguiente. */
+export function measureCm(who: string, day: string): number {
+  return 1 + (stableHash(`🍆${who}|${day}`) % 30);
+}
+
+export function measureVerdict(cm: number): string {
+  if (cm >= 25) return '🐴 Eso ya es ilegal en 3 países.';
+  if (cm >= 19) return '🔥 Material de leyenda.';
+  if (cm >= 14) return '😎 Todo en orden, caballero.';
+  if (cm >= 9) return '🙂 Cumple su función.';
+  if (cm >= 5) return '🤏 Lo importante es cómo se usa.';
+  return '🔬 Se necesita microscopio.';
+}
+
+export function measureBar(cm: number): string {
+  return `8${'='.repeat(Math.max(1, Math.round(cm / 2)))}D`;
 }
 
 export function shipVerdict(p: number): string {
