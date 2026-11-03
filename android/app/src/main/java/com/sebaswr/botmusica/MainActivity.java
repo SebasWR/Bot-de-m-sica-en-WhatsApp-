@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -36,7 +37,12 @@ public class MainActivity extends Activity {
     private static final String INSTALL_CMD =
             "curl -fsSL https://raw.githubusercontent.com/SebasWR/Bot-de-m-sica-en-WhatsApp-/"
                     + "claude/project-thread-7kisu7/termux/instalar.sh | bash";
+    private static final String FIX_CMD =
+            "mkdir -p ~/.termux && sed -i '/^[[:space:]]*allow-external-apps/d' ~/.termux/termux.properties 2>/dev/null; "
+                    + "echo 'allow-external-apps = true' >> ~/.termux/termux.properties && termux-reload-settings";
     private static final int REQ_STATUS = 1;
+    /** Si Termux ya respondió bien una vez; si no, no consultamos solos para no llenar de notificaciones. */
+    private static final String PREF_OK = "termux_ok";
 
     private TextView status;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -92,7 +98,10 @@ public class MainActivity extends Activity {
                 + "4. Dale permiso a la app cuando lo pida.");
         root.addView(help);
 
-        root.addView(button("Copiar comando de instalación y abrir Termux", "#37474F", v -> copyInstall()));
+        root.addView(button("Copiar comando de instalación y abrir Termux", "#37474F",
+                v -> copyAndOpen(INSTALL_CMD, "Copiado. Pegalo en Termux (mantené apretado → Paste)")));
+        root.addView(button("Copiar comando para arreglar \"RunCommandService\"", "#37474F",
+                v -> copyAndOpen(FIX_CMD, "Copiado. Pegalo en Termux, Enter, y después cerrá Termux (Exit) y abrilo de nuevo")));
         root.addView(button("Bajar Termux (F-Droid)", "#37474F", v -> open("https://f-droid.org/packages/com.termux/")));
         root.addView(button("Permitir que no se duerma (batería)", "#37474F", v -> openBatterySettings()));
 
@@ -104,7 +113,19 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        refreshStatus();
+        if (prefs().getBoolean(PREF_OK, false)) {
+            refreshStatus();
+        } else if (status.getText().length() == 0) {
+            status.setText("Tocá \"Ver estado\" para comprobar el bot");
+        }
+    }
+
+    private SharedPreferences prefs() {
+        return getSharedPreferences("bot", MODE_PRIVATE);
+    }
+
+    private void setTermuxOk(boolean ok) {
+        prefs().edit().putBoolean(PREF_OK, ok).apply();
     }
 
     private Button button(String text, String color, View.OnClickListener onClick) {
@@ -204,6 +225,7 @@ public class MainActivity extends Activity {
         if (requestCode != REQ_STATUS || data == null) return;
         Bundle result = data.getBundleExtra("result");
         String out = result == null ? "" : String.valueOf(result.getString("stdout", "")).trim();
+        if (!out.isEmpty()) setTermuxOk(true);
         if (out.contains("ON")) {
             status.setText("🟢 Bot prendido");
         } else if (out.contains("NOINST")) {
@@ -211,32 +233,38 @@ public class MainActivity extends Activity {
         } else if (out.contains("OFF")) {
             status.setText("🔴 Bot apagado");
         } else {
+            setTermuxOk(false);
             String err = result == null ? "" : String.valueOf(result.getString("errmsg", ""));
-            status.setText("No pude saber el estado " + (err.isEmpty() ? "" : "(" + err + ")"));
+            if (err.contains("allow-external-apps")) {
+                status.setText("⚠️ Termux no acepta comandos: tocá \"Copiar comando para arreglar\" abajo");
+            } else {
+                status.setText("No pude saber el estado" + (err.isEmpty() ? "" : " (" + err + ")"));
+            }
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
-        refreshStatus();
+        if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) refreshStatus();
     }
 
     private void refreshLater() {
-        handler.postDelayed(this::refreshStatus, 3000);
+        if (prefs().getBoolean(PREF_OK, false)) handler.postDelayed(this::refreshStatus, 3000);
     }
 
     private void showSetupError(Exception e) {
+        setTermuxOk(false);
         status.setText("⚠️ Termux no acepta comandos todavía");
         Toast.makeText(this,
                 "Corré el comando de instalación en Termux y reiniciá Termux. (" + e.getMessage() + ")",
                 Toast.LENGTH_LONG).show();
     }
 
-    private void copyInstall() {
+    private void copyAndOpen(String cmd, String msg) {
         ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        cm.setPrimaryClip(ClipData.newPlainText("instalar", INSTALL_CMD));
-        Toast.makeText(this, "Copiado. Pegalo en Termux (mantené apretado → Paste)", Toast.LENGTH_LONG).show();
+        cm.setPrimaryClip(ClipData.newPlainText("comando", cmd));
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
         openTermux();
     }
 

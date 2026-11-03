@@ -68,6 +68,10 @@ Baja la última versión, actualiza yt-dlp (YouTube cambia seguido) y reinicia e
 
 ## Si algo falla
 
+- **Muchas notificaciones "RunCommandService requires…"**: en Termux pegá
+  `mkdir -p ~/.termux && echo "allow-external-apps = true" >> ~/.termux/termux.properties && termux-reload-settings`,
+  después cerrá Termux (Exit en la notificación) y abrilo de nuevo. La app también tiene un botón que copia este comando.
+
 - **"El bot no está prendido"** al ver: apretá *Bot - prender*.
 - **Las canciones no bajan**: corré `actualizar.sh` (casi siempre es yt-dlp viejo).
 - **Se apaga solo con la pantalla apagada**: revisá que Termux esté en batería "Sin restricciones". En la notificación de Termux tiene que decir *wake lock held*.

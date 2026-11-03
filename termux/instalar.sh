@@ -9,6 +9,13 @@ BRANCH="${BOT_BRANCH:-claude/project-thread-7kisu7}"
 BOT_DIR="${BOT_DIR:-$HOME/bot-musica}"
 NUMERO="${PAIRING_NUMBER:-59896570220}"
 
+# Lo primero: dejar que la app "Bot de Música" (APK) le mande comandos a Termux
+mkdir -p "$HOME/.termux"
+touch "$HOME/.termux/termux.properties"
+sed -i '/^[[:space:]]*allow-external-apps/d' "$HOME/.termux/termux.properties"
+echo 'allow-external-apps = true' >> "$HOME/.termux/termux.properties"
+termux-reload-settings 2>/dev/null || true
+
 echo "==> Actualizando paquetes de Termux (puede tardar unos minutos)…"
 yes | pkg update -y || true
 pkg install -y nodejs-lts git ffmpeg python tmux termux-api
@@ -39,12 +46,6 @@ if [ ! -f .env ]; then
   echo "==> Creado .env (número para vincular: $NUMERO)"
 fi
 
-# Deja que la app "Bot de Música" (APK) le mande comandos a Termux
-mkdir -p "$HOME/.termux"
-grep -qs '^allow-external-apps' "$HOME/.termux/termux.properties" \
-  || echo 'allow-external-apps = true' >> "$HOME/.termux/termux.properties"
-termux-reload-settings 2>/dev/null || true
-
 echo "==> Creando accesos directos para el widget de Termux…"
 mkdir -p "$HOME/.shortcuts"
 for s in prender apagar ver; do
@@ -66,5 +67,6 @@ SH
 chmod +x "$HOME/.termux/boot/prender-bot"
 
 echo
-echo "✅ Listo. Para prender el bot escribí:   bash ~/bot-musica/termux/prender.sh"
+echo "✅ Listo. Cerrá Termux del todo (Exit en la notificación) y volvé a abrirlo para que la app funcione."
+echo "   Para prender el bot desde acá:       bash ~/bot-musica/termux/prender.sh"
 echo "   Para ver el código de vinculación:   bash ~/bot-musica/termux/ver.sh"
