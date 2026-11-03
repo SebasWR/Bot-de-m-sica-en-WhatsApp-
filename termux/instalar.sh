@@ -39,6 +39,12 @@ if [ ! -f .env ]; then
   echo "==> Creado .env (número para vincular: $NUMERO)"
 fi
 
+# Deja que la app "Bot de Música" (APK) le mande comandos a Termux
+mkdir -p "$HOME/.termux"
+grep -qs '^allow-external-apps' "$HOME/.termux/termux.properties" \
+  || echo 'allow-external-apps = true' >> "$HOME/.termux/termux.properties"
+termux-reload-settings 2>/dev/null || true
+
 echo "==> Creando accesos directos para el widget de Termux…"
 mkdir -p "$HOME/.shortcuts"
 for s in prender apagar ver; do
