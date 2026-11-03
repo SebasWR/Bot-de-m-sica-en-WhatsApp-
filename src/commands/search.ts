@@ -3,6 +3,7 @@ import type { Command } from './types.js';
 
 export const searchCommand: Command = {
   name: 'buscar',
+  category: 'musica',
   aliases: ['search', 's'],
   description: 'Busca canciones y muestra los 5 primeros resultados',
   usage: '<canción o artista>',

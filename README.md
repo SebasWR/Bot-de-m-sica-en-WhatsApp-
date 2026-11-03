@@ -47,16 +47,53 @@ npm run build && npm start
 
 ## 💬 Comandos
 
+`!ayuda` muestra todo; `!ayuda juegos` (o `!juegos`) muestra solo los juegos con sus alias.
+
+### 🎵 Música
+
 | Comando | Alias | Qué hace |
 |---|---|---|
 | `!play <canción \| URL \| número>` | `!p`, `!musica`, `!cancion` | Descarga la canción y la envía como audio OGG/Opus |
 | `!buscar <texto>` | `!search`, `!s` | Muestra 5 resultados; luego `!play 2` envía el segundo |
 | `!historial` | `!history`, `!h` | Tus últimas 10 canciones |
 | `!top` | `!ranking` | Las canciones más pedidas |
-| `!ping` | | Comprueba que el bot responde |
-| `!ayuda` | `!help`, `!menu` | Lista de comandos |
 
-Funciona en chats privados y en grupos. Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una duración máxima por canción (`MAX_DURATION_SECONDS`).
+Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una duración máxima por canción (`MAX_DURATION_SECONDS`).
+
+### 🎮 Juegos
+
+| Comando | Alias | Qué hace |
+|---|---|---|
+| `!tateti [@rival \| bot] [facil\|normal\|dificil]` | `!ttt`, `!gato`, `!3enraya` | Tres en raya. En grupo: `@rival` lo reta, `bot` juega contra el bot, sin nada es un reto abierto. En privado siempre contra el bot |
+| `!4enraya [@rival \| bot] [nivel]` | `!conecta4`, `!c4` | 4 en raya (columnas 1–7), mismo sistema de retos |
+| `!aceptar` / `!rechazar` | `!si` / `!no` | Acepta o rechaza un reto pendiente |
+| `!ahorcado [palabra]` | `!hangman` | Adivinen la palabra entre todos: una letra por mensaje, o la palabra entera directamente cuando la sepan |
+| `!trivia` | `!pregunta`, `!quiz` | Pregunta con 4 opciones; un intento por persona, gana el primero que acierta |
+| `!adivina` | `!numero` | Número secreto del 1 al 100, 8 intentos entre todos con pistas |
+| `!ppt <piedra\|papel\|tijera>` | `!rps` | Piedra, papel o tijera contra el bot |
+| `!rendirse` | `!salir`, `!saltar` | Termina la partida actual del chat |
+| `!puntos [juego]` | `!puntaje`, `!tabla` | Ranking de victorias del chat (todos los juegos o uno) |
+
+**Cómo se juega:** después de empezar una partida se responde en el chat sin prefijo: un número para tateti, 4 en raya y adivina; una letra (o la palabra entera) para el ahorcado; `A`–`D` para la trivia. Solo hay una partida por chat y se cancela sola tras 15 minutos sin jugadas. Las victorias se guardan en SQLite por chat.
+
+### 🎲 Diversión
+
+| Comando | Alias | Qué hace |
+|---|---|---|
+| `!dado [NdM]` | `!dados`, `!d` | `!dado`, `!dado 20`, `!dado 3d6` |
+| `!moneda` | `!coin`, `!flip` | Cara o cruz |
+| `!bola <pregunta>` | `!8ball` | La bola mágica responde |
+| `!elegir a, b o c` | `!elige` | El bot elige por ti |
+| `!amor @a @b`, `!amor @a` o `!amor Ana y Juan` | `!ship`, `!love` | % de amor entre dos personas (siempre el mismo para la misma pareja) |
+
+### ⚙️ General
+
+| Comando | Alias | Qué hace |
+|---|---|---|
+| `!ping` | | Comprueba que el bot responde |
+| `!ayuda [sección]` | `!help`, `!menu`, `!comandos`, `!juegos` | Lista de comandos |
+
+Funciona en chats privados y en grupos.
 
 ## ⚙️ Configuración
 
@@ -76,20 +113,31 @@ src/
 │   ├── parser.ts         # "!play x" → { name, args, text }
 │   ├── registry.ts       # Registro de comandos y alias
 │   ├── handler.ts        # Ejecuta comandos, cooldown y errores
+│   ├── games.ts          # Comandos de juegos (tateti, ahorcado, trivia...)
+│   ├── fun.ts            # Dados, moneda, bola 8, elegir, ship, ppt
 │   └── play.ts, search.ts, history.ts, help.ts, ping.ts
+├── games/
+│   ├── manager.ts        # Una partida activa por chat, con caducidad
+│   ├── duel.ts           # Retos 1 vs 1 (o vs bot) por turnos
+│   ├── tictactoe.ts      # Tablero y bot (minimax) del tateti
+│   ├── connect4.ts       # Tablero y bot del 4 en raya
+│   ├── hangman.ts, trivia.ts, guess.ts, fun.ts
+│   └── data/             # Palabras del ahorcado y preguntas de trivia
 ├── services/
 │   ├── music.ts          # yt-dlp: búsqueda y descarga
 │   └── audio.ts          # FFmpeg: conversión a OGG/Opus
 └── db/
-    └── database.ts       # SQLite: usuarios, historial y ajustes
+    └── database.ts       # SQLite: usuarios, historial, puntos de juegos y ajustes
 ```
 
 Para añadir un comando nuevo, crea un archivo en `src/commands/` que exporte un objeto `Command` y regístralo en `src/commands/index.ts`.
 
+Para añadir un juego por turnos, implementa `ChatGame` (`src/games/manager.ts`): recibe los mensajes del chat con `onText` mientras la partida está activa. Los juegos de tablero 1 vs 1 solo necesitan un `BoardEngine` y se reutiliza `DuelGame`. Para más preguntas de trivia o palabras del ahorcado, edita `src/games/data/`.
+
 ## 🧪 Pruebas
 
 ```bash
-npm test         # pruebas de comandos, base de datos y conversión con FFmpeg
+npm test         # pruebas de comandos, juegos, base de datos y conversión con FFmpeg
 npm run typecheck
 ```
 

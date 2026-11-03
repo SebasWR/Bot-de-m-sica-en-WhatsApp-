@@ -1,7 +1,7 @@
 node_modules/
 dist/
 .env
-auth/
-data/
-tmp/
+/auth/
+/data/
+/tmp/
 *.log

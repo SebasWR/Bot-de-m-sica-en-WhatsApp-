@@ -1,11 +1,24 @@
 import type { WAMessage } from 'baileys';
 
-/** Extrae el texto de un mensaje de WhatsApp (texto simple, respuesta o pie de foto/vídeo). */
-export function extractText(msg: Pick<WAMessage, 'message'>): string | null {
-  let m = msg.message;
+function unwrap(msg: Pick<WAMessage, 'message'>) {
+  const m = msg.message;
   if (!m) return null;
   // Mensajes temporales / "ver una vez" envuelven el contenido real
-  m = m.ephemeralMessage?.message ?? m.viewOnceMessage?.message ?? m.viewOnceMessageV2?.message ?? m;
+  return m.ephemeralMessage?.message ?? m.viewOnceMessage?.message ?? m.viewOnceMessageV2?.message ?? m;
+}
+
+/** JIDs mencionados con @ en el mensaje (texto o pie de foto/vídeo). */
+export function extractMentions(msg: Pick<WAMessage, 'message'>): string[] {
+  const m = unwrap(msg);
+  if (!m) return [];
+  const info = m.extendedTextMessage?.contextInfo ?? m.imageMessage?.contextInfo ?? m.videoMessage?.contextInfo;
+  return (info?.mentionedJid ?? []).filter((j): j is string => typeof j === 'string' && j.length > 0);
+}
+
+/** Extrae el texto de un mensaje de WhatsApp (texto simple, respuesta o pie de foto/vídeo). */
+export function extractText(msg: Pick<WAMessage, 'message'>): string | null {
+  const m = unwrap(msg);
+  if (!m) return null;
   return (
     m.conversation ??
     m.extendedTextMessage?.text ??

@@ -2,7 +2,7 @@ node_modules
 dist
 .git
 .env
-auth
-data
-tmp
+/auth
+/data
+/tmp
 *.log

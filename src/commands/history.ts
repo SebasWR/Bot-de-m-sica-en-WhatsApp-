@@ -3,6 +3,7 @@ import type { Command } from './types.js';
 
 export const historyCommand: Command = {
   name: 'historial',
+  category: 'musica',
   aliases: ['history', 'h'],
   description: 'Muestra tus últimas 10 canciones',
   async execute(ctx) {
@@ -18,6 +19,7 @@ export const historyCommand: Command = {
 
 export const topCommand: Command = {
   name: 'top',
+  category: 'musica',
   aliases: ['ranking'],
   description: 'Las canciones más pedidas en el bot',
   async execute(ctx) {
