@@ -21,8 +21,9 @@ echo 'allow-external-apps = true' >> "$HOME/.termux/termux.properties"
 termux-reload-settings 2>/dev/null || true
 
 echo "==> Actualizando paquetes de Termux (puede tardar unos minutos)…"
-yes | pkg update -y || true
-pkg install -y nodejs-lts git ffmpeg python tmux termux-api
+# upgrade completo: si quedan librerías viejas (libc++), ffmpeg falla con "CANNOT LINK EXECUTABLE"
+yes | pkg upgrade -y -o Dpkg::Options::="--force-confnew" || true
+yes | pkg install -y -o Dpkg::Options::="--force-confnew" nodejs-lts git ffmpeg python tmux termux-api
 
 echo "==> Instalando yt-dlp…"
 pip install -U yt-dlp yt-dlp-ejs
