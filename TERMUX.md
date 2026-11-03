@@ -52,6 +52,12 @@ Si el bot se cae, se reinicia solo. Si reiniciás el celular y tenés **Termux:B
 
 También se puede desde Termux escribiendo `bash ~/bot-musica/termux/prender.sh` (o `apagar.sh`, `ver.sh`).
 
+## App "Bot de Música" (APK)
+
+En vez del widget podés usar la app: https://github.com/SebasWR/Bot-de-m-sica-en-WhatsApp-/releases/download/apk-latest/BotMusica.apk
+
+Tiene botones para prender, apagar, ver la consola, actualizar y muestra si el bot está prendido. Por dentro usa Termux, así que igual hay que hacer los pasos 1 a 3 (la app te ayuda: copia el comando de instalación y abre Termux). Después de instalar, cerrá Termux del todo y volvé a abrirlo, y la primera vez que toques un botón aceptá el permiso.
+
 ## Actualizar el bot
 
 ```bash
