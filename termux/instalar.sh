@@ -5,6 +5,10 @@
 set -euo pipefail
 
 REPO_URL="https://github.com/SebasWR/Bot-de-m-sica-en-WhatsApp-.git"
+# Si el repo es privado, pasá un token de GitHub de solo lectura: GITHUB_TOKEN=xxx bash instalar.sh
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/SebasWR/Bot-de-m-sica-en-WhatsApp-.git"
+fi
 BRANCH="${BOT_BRANCH:-claude/project-thread-7kisu7}"
 BOT_DIR="${BOT_DIR:-$HOME/bot-musica}"
 NUMERO="${PAIRING_NUMBER:-59896570220}"
@@ -29,6 +33,7 @@ grep -qs -- '--js-runtimes' "$HOME/.config/yt-dlp/config" || echo '--js-runtimes
 
 echo "==> Descargando el bot en $BOT_DIR…"
 if [ -d "$BOT_DIR/.git" ]; then
+  git -C "$BOT_DIR" remote set-url origin "$REPO_URL"
   git -C "$BOT_DIR" fetch origin "$BRANCH"
   git -C "$BOT_DIR" checkout -B "$BRANCH" "origin/$BRANCH"
 else
