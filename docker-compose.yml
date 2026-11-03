@@ -1,0 +1,14 @@
+services:
+  bot:
+    build: .
+    image: whatsapp-music-bot
+    container_name: whatsapp-music-bot
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./auth:/app/auth
+      - ./data:/app/data
+    stdin_open: true
+    tty: true
