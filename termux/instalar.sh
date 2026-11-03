@@ -2,7 +2,11 @@
 # Instala el bot de música en Android con Termux.
 # Uso (en Termux):
 #   curl -fsSL https://raw.githubusercontent.com/SebasWR/Bot-de-m-sica-en-WhatsApp-/claude/project-thread-7kisu7/termux/instalar.sh | bash
-set -euo pipefail
+set -Eeuo pipefail
+trap 'echo "❌ La instalación falló (línea $LINENO). Mandá una captura de lo de arriba."' ERR
+
+# Todo va dentro de main para que bash lea el script entero antes de ejecutarlo (curl | bash)
+main() {
 
 REPO_URL="https://github.com/SebasWR/Bot-de-m-sica-en-WhatsApp-.git"
 # Si el repo es privado, pasá un token de GitHub de solo lectura: GITHUB_TOKEN=xxx bash instalar.sh
@@ -22,8 +26,8 @@ termux-reload-settings 2>/dev/null || true
 
 echo "==> Actualizando paquetes de Termux (puede tardar unos minutos)…"
 # upgrade completo: si quedan librerías viejas (libc++), ffmpeg falla con "CANNOT LINK EXECUTABLE"
-yes | pkg upgrade -y -o Dpkg::Options::="--force-confnew" || true
-yes | pkg install -y -o Dpkg::Options::="--force-confnew" nodejs-lts git ffmpeg python tmux termux-api
+pkg upgrade -y -o Dpkg::Options::="--force-confnew" </dev/null || true
+pkg install -y -o Dpkg::Options::="--force-confnew" </dev/null nodejs-lts git ffmpeg python tmux termux-api
 
 echo "==> Instalando yt-dlp…"
 pip install -U yt-dlp yt-dlp-ejs
@@ -76,3 +80,6 @@ echo
 echo "✅ Listo. Cerrá Termux del todo (Exit en la notificación) y volvé a abrirlo para que la app funcione."
 echo "   Para prender el bot desde acá:       bash ~/bot-musica/termux/prender.sh"
 echo "   Para ver el código de vinculación:   bash ~/bot-musica/termux/ver.sh"
+}
+
+main "$@"
