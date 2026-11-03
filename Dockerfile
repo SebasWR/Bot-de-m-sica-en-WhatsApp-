@@ -2,11 +2,6 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
-# Herramientas por si better-sqlite3 necesita compilarse
-RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 make g++ \
- && rm -rf /var/lib/apt/lists/*
-
 COPY package.json package-lock.json ./
 RUN npm ci
 
@@ -41,4 +36,4 @@ USER node
 # auth = sesión de WhatsApp, data = base de datos SQLite
 VOLUME ["/app/auth", "/app/data"]
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "--disable-warning=ExperimentalWarning", "dist/index.js"]

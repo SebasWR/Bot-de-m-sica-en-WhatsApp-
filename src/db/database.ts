@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -84,28 +84,51 @@ const MIGRATIONS: string[] = [
    );`,
 ];
 
+/** node:sqlite devuelve objetos sin prototipo; los pasamos a objetos normales. */
+function plain<T>(row: unknown): T {
+  return (row === undefined ? undefined : { ...(row as object) }) as T;
+}
+
+function plainAll<T>(rows: unknown[]): T[] {
+  return rows.map((r) => ({ ...(r as object) })) as T[];
+}
+
 /**
  * Capa de acceso a SQLite: usuarios, historial de canciones y configuración.
  */
 export class BotDatabase {
-  private readonly db: Database.Database;
+  private readonly db: DatabaseSync;
 
   constructor(file: string) {
     if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
-    this.db = new Database(file);
-    this.db.pragma('journal_mode = WAL');
-    this.db.pragma('foreign_keys = ON');
+    // node:sqlite viene con Node (sin compilar nada), así funciona igual en Windows, Linux y Android (Termux)
+    this.db = new DatabaseSync(file);
+    this.db.exec('PRAGMA journal_mode = WAL');
+    this.db.exec('PRAGMA foreign_keys = ON');
     this.migrate();
   }
 
+  /** Ejecuta fn dentro de una transacción (rollback si falla). */
+  private transaction(fn: () => void): void {
+    this.db.exec('BEGIN');
+    try {
+      fn();
+      this.db.exec('COMMIT');
+    } catch (err) {
+      this.db.exec('ROLLBACK');
+      throw err;
+    }
+  }
+
   private migrate(): void {
-    const current = this.db.pragma('user_version', { simple: true }) as number;
+    const row = this.db.prepare('PRAGMA user_version').get() as { user_version: number } | undefined;
+    const current = Number(row?.user_version ?? 0);
     for (let version = current; version < MIGRATIONS.length; version++) {
       const sql = MIGRATIONS[version]!;
-      this.db.transaction(() => {
+      this.transaction(() => {
         this.db.exec(sql);
-        this.db.pragma(`user_version = ${version + 1}`);
-      })();
+        this.db.exec(`PRAGMA user_version = ${version + 1}`);
+      });
     }
   }
 
@@ -123,7 +146,7 @@ export class BotDatabase {
   }
 
   getUser(jid: string): UserRow | undefined {
-    return this.db.prepare(`SELECT * FROM users WHERE jid = ?`).get(jid) as UserRow | undefined;
+    return plain<UserRow | undefined>(this.db.prepare(`SELECT * FROM users WHERE jid = ?`).get(jid));
   }
 
   setBanned(jid: string, banned: boolean): void {
@@ -131,7 +154,8 @@ export class BotDatabase {
   }
 
   addHistory(entry: NewHistoryEntry): void {
-    const insert = this.db.transaction((e: NewHistoryEntry) => {
+    const e = entry;
+    this.transaction(() => {
       this.db
         .prepare(
           `INSERT INTO history (user_jid, chat_jid, query, title, url, duration)
@@ -140,17 +164,16 @@ export class BotDatabase {
         .run(e.userJid, e.chatJid, e.query, e.title, e.url, e.duration);
       this.db.prepare(`UPDATE users SET requests = requests + 1 WHERE jid = ?`).run(e.userJid);
     });
-    insert(entry);
   }
 
   getHistory(userJid: string, limit = 10): HistoryRow[] {
     return this.db
       .prepare(`SELECT * FROM history WHERE user_jid = ? ORDER BY id DESC LIMIT ?`)
-      .all(userJid, limit) as HistoryRow[];
+      .all(userJid, limit).map((r) => plain<HistoryRow>(r));
   }
 
   getRecent(limit = 10): HistoryRow[] {
-    return this.db.prepare(`SELECT * FROM history ORDER BY id DESC LIMIT ?`).all(limit) as HistoryRow[];
+    return plainAll<HistoryRow>(this.db.prepare(`SELECT * FROM history ORDER BY id DESC LIMIT ?`).all(limit));
   }
 
   getTopSongs(limit = 10): TopSong[] {
@@ -159,7 +182,7 @@ export class BotDatabase {
         `SELECT title, url, COUNT(*) AS plays FROM history
          GROUP BY url ORDER BY plays DESC, MAX(id) DESC LIMIT ?`,
       )
-      .all(limit) as TopSong[];
+      .all(limit).map((r) => plain<TopSong>(r));
   }
 
   /** Suma una victoria, derrota o empate a un usuario en un juego de un chat. */
@@ -188,11 +211,11 @@ export class BotDatabase {
          ORDER BY wins DESC, losses ASC, s.user_jid ASC
          LIMIT ?`,
       )
-      .all(chatJid, game ?? null, game ?? null, limit) as unknown as GameRankingRow[];
+      .all(chatJid, game ?? null, game ?? null, limit).map((r) => plain<GameRankingRow>(r));
   }
 
   getSetting(key: string): string | undefined {
-    const row = this.db.prepare(`SELECT value FROM settings WHERE key = ?`).get(key) as
+    const row = this.db.prepare(`SELECT value FROM settings WHERE key = ?`).get(key) as unknown as
       | { value: string }
       | undefined;
     return row?.value;
