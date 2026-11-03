@@ -35,8 +35,8 @@ public class MainActivity extends Activity {
     private static final String HOME = "/data/data/com.termux/files/home";
     private static final String BOT = HOME + "/bot-musica/termux/";
     private static final String INSTALL_CMD =
-            "curl -fsSL https://raw.githubusercontent.com/SebasWR/Bot-de-m-sica-en-WhatsApp-/"
-                    + "claude/project-thread-7kisu7/termux/instalar.sh | bash";
+            "curl -fsSL \"https://raw.githubusercontent.com/SebasWR/Bot-de-m-sica-en-WhatsApp-/"
+                    + "claude/project-thread-7kisu7/termux/instalar.sh?$(date +%s)\" -o ~/instalar.sh && bash ~/instalar.sh";
     private static final String FIX_CMD =
             "mkdir -p ~/.termux && sed -i '/^[[:space:]]*allow-external-apps/d' ~/.termux/termux.properties 2>/dev/null; "
                     + "echo 'allow-external-apps = true' >> ~/.termux/termux.properties && termux-reload-settings";
