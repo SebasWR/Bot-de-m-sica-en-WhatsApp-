@@ -1,4 +1,4 @@
-# Prender el bot sin PC y sin Termux (GitHub Codespaces)
+# Prender el bot sin PC (GitHub Codespaces)
 
 Codespaces es una compu en la nube de GitHub que se maneja desde el navegador del celular.
 Es gratis hasta ~60 horas por mes.

@@ -101,7 +101,7 @@ export class BotDatabase {
 
   constructor(file: string) {
     if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
-    // node:sqlite viene con Node (sin compilar nada), así funciona igual en Windows, Linux y Android (Termux)
+    // node:sqlite viene con Node (sin compilar nada), así funciona igual en Windows, Linux y Codespaces
     this.db = new DatabaseSync(file);
     this.db.exec('PRAGMA journal_mode = WAL');
     this.db.exec('PRAGMA foreign_keys = ON');
