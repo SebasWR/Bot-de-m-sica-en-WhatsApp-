@@ -4,7 +4,7 @@ import { handleText, type IncomingContext } from '../src/commands/handler.js';
 import { createRegistry } from '../src/commands/index.js';
 import { BotDatabase } from '../src/db/database.js';
 import type { AudioService } from '../src/services/audio.js';
-import type { MusicService, Track } from '../src/services/music.js';
+import { explain, type MusicService, type Track } from '../src/services/music.js';
 import { BotState } from '../src/state.js';
 import { GameManager } from '../src/games/manager.js';
 
@@ -16,7 +16,7 @@ function setup() {
   const audios: string[] = [];
   const cleaned: string[] = [];
   const music = {
-    search: async () => [song, longSong],
+    searchAny: async () => [song, longSong],
     resolve: async (q: string) => (q.includes('larga') ? longSong : q.includes('nada') ? null : song),
     download: async (t: Track) => ({ track: t, file: '/tmp/x.webm' }),
   } as unknown as MusicService;
@@ -99,4 +99,13 @@ test('los errores de un comando se responden sin tumbar el bot', async () => {
   };
   assert.equal(await handleText(registry, '!play x', base), true);
   assert.match(replies.at(-1)!, /error/);
+});
+
+test('un error de YouTube con mensaje para el usuario se muestra tal cual', async () => {
+  const { base, registry, replies } = setup();
+  (base.services.music as unknown as { resolve: () => Promise<never> }).resolve = async () => {
+    throw explain(new Error('yt-dlp terminó con código 1: ERROR: Sign in to confirm you’re not a bot'));
+  };
+  await handleText(registry, '!play x', base);
+  assert.match(replies.at(-1)!, /YouTube bloqueó/);
 });

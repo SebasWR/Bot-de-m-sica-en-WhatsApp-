@@ -1,4 +1,5 @@
-import { TRIVIA_QUESTIONS, type TriviaQuestion } from './data/trivia.js';
+import { TRIVIA_QUESTIONS, TRIVIA_QUESTIONS_EN, type TriviaQuestion } from './data/trivia.js';
+import type { Lang } from './lang.js';
 import type { ChatGame, PlayContext } from './manager.js';
 import { pick, shuffle, type Rng } from './random.js';
 import { tag } from './text.js';
@@ -11,7 +12,7 @@ const LETTERS = ['A', 'B', 'C', 'D'] as const;
  */
 export class TriviaGame implements ChatGame {
   readonly id = 'trivia';
-  readonly label = '🧠 Trivia';
+  readonly label: string;
   readonly question: TriviaQuestion;
   readonly options: string[];
   readonly correct: number;
@@ -23,8 +24,10 @@ export class TriviaGame implements ChatGame {
     private readonly isGroup: boolean,
     rng: Rng,
     question?: TriviaQuestion,
+    readonly lang: Lang = 'es',
   ) {
-    this.question = question ?? pick(rng, TRIVIA_QUESTIONS);
+    this.label = lang === 'en' ? '🧠 Trivia (English)' : '🧠 Trivia';
+    this.question = question ?? pick(rng, lang === 'en' ? TRIVIA_QUESTIONS_EN : TRIVIA_QUESTIONS);
     this.options = shuffle(rng, this.question.options);
     this.correct = this.options.indexOf(this.question.options[0]);
   }
@@ -39,7 +42,7 @@ export class TriviaGame implements ChatGame {
     const answer = TriviaGame.parseAnswer(text);
     if (answer === null) return false;
     if (this.tried.has(ctx.senderJid)) {
-      await ctx.reply('Ya respondiste esta pregunta 🙊');
+      await ctx.reply(this.t('Ya respondiste esta pregunta 🙊', 'You already answered this one 🙊'));
       return true;
     }
     this.tried.add(ctx.senderJid);
@@ -49,7 +52,10 @@ export class TriviaGame implements ChatGame {
       ctx.services.db.addGameResult(this.chatJid, ctx.senderJid, this.id, 'win');
       await ctx.react('✅');
       await ctx.reply(
-        `🎉 ¡Correcto, ${tag(ctx.senderJid)}! Era *${this.correctText}*.\nOtra: *${this.prefix}trivia*`,
+        this.t(
+          `🎉 ¡Correcto, ${tag(ctx.senderJid)}! Era *${this.correctText}*.\nOtra: *${this.again}*`,
+          `🎉 Correct, ${tag(ctx.senderJid)}! It was *${this.correctText}*.\nAnother one: *${this.again}*`,
+        ),
         [ctx.senderJid],
       );
       return true;
@@ -59,9 +65,22 @@ export class TriviaGame implements ChatGame {
     await ctx.react('❌');
     if (!this.isGroup) {
       ctx.services.games.end(this.chatJid, this);
-      await ctx.reply(`❌ Incorrecto. La respuesta era *${this.correctText}*.\nOtra: *${this.prefix}trivia*`);
+      await ctx.reply(
+        this.t(
+          `❌ Incorrecto. La respuesta era *${this.correctText}*.\nOtra: *${this.again}*`,
+          `❌ Wrong. The answer was *${this.correctText}*.\nAnother one: *${this.again}*`,
+        ),
+      );
     }
     return true;
+  }
+
+  private t(es: string, en: string): string {
+    return this.lang === 'en' ? en : es;
+  }
+
+  private get again(): string {
+    return `${this.prefix}trivia${this.lang === 'en' ? ' en' : ''}`;
   }
 
   private get correctText(): string {
@@ -70,15 +89,20 @@ export class TriviaGame implements ChatGame {
 
   async onQuit(ctx: PlayContext): Promise<boolean> {
     ctx.services.games.end(this.chatJid, this);
-    await ctx.reply(`⏭️ Pregunta saltada. La respuesta era *${this.correctText}*.`);
+    await ctx.reply(
+      this.t(`⏭️ Pregunta saltada. La respuesta era *${this.correctText}*.`, `⏭️ Skipped. The answer was *${this.correctText}*.`),
+    );
     return true;
   }
 
   status(): { text: string } {
     const opts = this.options.map((o, i) => `*${LETTERS[i]})* ${o}`).join('\n');
-    const rule = this.isGroup ? 'Un intento por persona, ¡el primero que acierte gana!' : 'Tienes un intento.';
+    const rule = this.isGroup
+      ? this.t('Un intento por persona, ¡el primero que acierte gana!', 'One try each, first correct answer wins!')
+      : this.t('Tienes un intento.', 'You have one try.');
+    const answerWith = this.t('Responde con la letra (A, B, C o D).', 'Answer with the letter (A, B, C or D).');
     return {
-      text: `${this.label} · ${this.question.category}\n\n❓ ${this.question.question}\n\n${opts}\n\nResponde con la letra (A, B, C o D). ${rule}`,
+      text: `${this.label} · ${this.question.category}\n\n❓ ${this.question.question}\n\n${opts}\n\n${answerWith} ${rule}`,
     };
   }
 }

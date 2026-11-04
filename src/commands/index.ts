@@ -1,8 +1,11 @@
 import { hugCommand, kissCommand, measureCommand, chooseCommand, coinCommand, diceCommand, eightBallCommand, rpsCommand, loveCommand } from './fun.js';
 import {
   acceptCommand,
+  characterCommand,
   connect4Command,
   declineCommand,
+  emojiAnimeCommand,
+  emojiGameCommand,
   guessCommand,
   hangmanCommand,
   quitCommand,
@@ -32,6 +35,9 @@ export function createRegistry(): CommandRegistry {
     .register(connect4Command)
     .register(hangmanCommand)
     .register(triviaCommand)
+    .register(emojiAnimeCommand)
+    .register(emojiGameCommand)
+    .register(characterCommand)
     .register(guessCommand)
     .register(rpsCommand)
     .register(acceptCommand)

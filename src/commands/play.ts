@@ -57,17 +57,18 @@ export const playCommand: Command = {
 
       const downloaded = await music.download(track);
       files.push(downloaded.file);
+      const got = downloaded.track; // puede ser la versión de SoundCloud si YouTube bloqueó
       const opus = await audio.toOpus(downloaded.file);
       files.push(opus);
 
-      await ctx.sendAudio({ file: opus, title: track.title, voiceNote: config.sendAsVoiceNote });
+      await ctx.sendAudio({ file: opus, title: got.title, voiceNote: config.sendAsVoiceNote });
       db.addHistory({
         userJid: ctx.senderJid,
         chatJid: ctx.chatJid,
         query: ctx.text,
-        title: track.title,
-        url: track.url,
-        duration: track.duration,
+        title: got.title,
+        url: got.url,
+        duration: got.duration,
       });
       await ctx.react('✅');
     } finally {

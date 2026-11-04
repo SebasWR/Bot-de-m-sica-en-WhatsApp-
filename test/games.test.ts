@@ -13,11 +13,15 @@ import {
   measureCm,
   shipPercent,
 } from '../src/games/fun.js';
-import { Hangman } from '../src/games/hangman.js';
+import { Hangman, HangmanGame } from '../src/games/hangman.js';
 import { GameManager } from '../src/games/manager.js';
 import { fold, tag } from '../src/games/text.js';
 import { TicTacToe } from '../src/games/tictactoe.js';
 import { TriviaGame } from '../src/games/trivia.js';
+import { TRIVIA_QUESTIONS, TRIVIA_QUESTIONS_EN } from '../src/games/data/trivia.js';
+import { HANGMAN_WORDS, HANGMAN_WORDS_EN } from '../src/games/data/words.js';
+import { ALL_CHARACTERS, ANIME_CHARACTERS, ANIME_EMOJIS, DIFFICULTIES, GAME_CHARACTERS, GAME_EMOJIS, parseDifficulty } from '../src/games/data/emojis.js';
+import { EmojiGame, matchesAnswer, normalizeAnswer } from '../src/games/emoji.js';
 import type { AudioService } from '../src/services/audio.js';
 import type { MusicService } from '../src/services/music.js';
 import type { GifService } from '../src/services/gifs.js';
@@ -386,4 +390,115 @@ test('!ayuda muestra secciones y !juegos solo los juegos', async () => {
   assert.doesNotMatch(last(), /!play/);
   assert.match(last(), /!ttt/);
   assert.match(last(), /Cómo se juega/);
+});
+
+test('trivia y ahorcado en inglés', async () => {
+  const { send, last, games } = setup();
+  await send(ANA, '!trivia en');
+  const trivia = games.active(GROUP) as TriviaGame;
+  assert.equal(trivia.lang, 'en');
+  assert.match(last(), /Answer with the letter/);
+  assert.ok(TRIVIA_QUESTIONS_EN.includes(trivia.question));
+  await send(ANA, '!rendirse');
+  await send(ANA, '!ahorcado ingles');
+  const hangman = games.active(GROUP) as HangmanGame;
+  assert.equal(hangman.lang, 'en');
+  assert.match(last(), /Type a letter/);
+  assert.ok(Object.values(HANGMAN_WORDS_EN).some((ws) => ws.includes(hangman.game.word)));
+});
+
+test('datos de juegos: sin repetidas y con 4 opciones distintas', () => {
+  for (const bank of [TRIVIA_QUESTIONS, TRIVIA_QUESTIONS_EN]) {
+    const qs = bank.map((q) => q.question);
+    assert.equal(new Set(qs).size, qs.length);
+    for (const q of bank) assert.equal(new Set(q.options).size, 4, q.question);
+  }
+  for (const bank of [HANGMAN_WORDS, HANGMAN_WORDS_EN])
+    for (const words of Object.values(bank)) for (const w of words) assert.match(w, /^[\p{L}]+$/u, w);
+  for (const p of [...ANIME_EMOJIS, ...GAME_EMOJIS, ...ALL_CHARACTERS]) assert.ok(matchesAnswer(p.answer, p), p.answer);
+});
+
+test('adiviná el anime por emojis: charla ignorada, pista y gana el primero', async () => {
+  const { send, last, games } = setup({ rng: () => 0 }); // primer anime: Naruto
+  await send(ANA, '!emojianime');
+  assert.match(last(), /🍥🦊🍜🥷/);
+  assert.equal(await send(BETO, 'jaja ni idea'), false, 'la charla no cuenta');
+  await send(BETO, 'pista');
+  assert.match(last(), /Empieza con \*N…\*/);
+  await send(BETO, '!anime bleach');
+  assert.match(last(), /No es \*bleach\*/);
+  await send(CARLA, 'naruto!');
+  assert.match(last(), /Correcto, @333! Era \*Naruto\*/);
+  assert.equal(games.active(GROUP), undefined);
+});
+
+test('adiviná el videojuego: alias y errores de tipeo', async () => {
+  const zelda = GAME_EMOJIS.find((p) => p.answer === 'The Legend of Zelda')!;
+  assert.ok(matchesAnswer('zelda', zelda));
+  assert.ok(matchesAnswer('legend of zelada', zelda));
+  assert.ok(!matchesAnswer('mario', zelda));
+  const pokemon = ANIME_EMOJIS.find((p) => p.answer === 'Pokémon')!;
+  assert.ok(matchesAnswer('POKEMON', pokemon));
+  const { send, last } = setup({ rng: () => 0 });
+  await send(ANA, '!emojijuego');
+  await send(ANA, '!rendirse');
+  assert.match(last(), /Era \*Super Mario\*/);
+});
+
+test('¿de qué anime es? por nombre de personaje', async () => {
+  const { send, last, games } = setup({ rng: () => 0 }); // Monkey D. Luffy
+  await send(ANA, '!personaje');
+  assert.match(last(), /Personaje: Monkey D\. Luffy _\(🎌 Anime\)_/);
+  await send(BETO, 'ONE PIECE');
+  assert.match(last(), /Correcto, @222! Era \*One Piece\*/);
+  assert.equal(games.active(GROUP), undefined);
+  const names = ANIME_EMOJIS.map((p) => normalizeAnswer(p.answer));
+  assert.equal(new Set(names).size, names.length, 'sin animes repetidos en emojis');
+  const chars = ALL_CHARACTERS.map((p) => p.emojis);
+  assert.equal(new Set(chars).size, chars.length, 'sin personajes repetidos');
+  assert.ok(ANIME_CHARACTERS.length >= 150);
+  for (const p of ALL_CHARACTERS) {
+    const options = [p.answer, ...(p.aliases ?? [])].map(normalizeAnswer);
+    assert.ok(!options.some((o) => normalizeAnswer(p.emojis).includes(o)), `el nombre no regala la respuesta: ${p.emojis}`);
+  }
+});
+
+test('dificultad: cada nivel tiene contenido y hardcore no da pistas', async () => {
+  for (const bank of [ANIME_EMOJIS, GAME_EMOJIS, ANIME_CHARACTERS, GAME_CHARACTERS])
+    for (const level of DIFFICULTIES) assert.ok(bank.filter((p) => p.level === level).length >= 5, level);
+  assert.equal(parseDifficulty('Difícil'), 'dificil');
+  assert.equal(parseDifficulty('hardcore'), 'hardcore');
+  assert.equal(parseDifficulty('naruto'), null);
+
+  const { send, last, games } = setup({ rng: () => 0 });
+  await send(ANA, '!emojianime facil');
+  const easy = games.active(GROUP) as EmojiGame;
+  assert.equal(easy.puzzle.level, 'facil');
+  assert.match(last(), /Fácil/);
+  await send(ANA, '!rendirse');
+  assert.match(last(), /emojianime facil/);
+
+  await send(ANA, '!emojianime hardcore');
+  const hc = games.active(GROUP) as EmojiGame;
+  assert.ok(['dificil', 'hardcore'].includes(hc.puzzle.level!));
+  assert.ok(hc.shown.length < hc.puzzle.emojis.length, 'muestra menos emojis');
+  await send(BETO, 'pista');
+  assert.match(last(), /no hay pistas/);
+  await send(ANA, '!rendirse');
+
+  await send(ANA, '!personaje medio');
+  assert.equal((games.active(GROUP) as EmojiGame).puzzle.level, 'medio');
+});
+
+test('personajes de videojuegos en !personaje', async () => {
+  const mario = GAME_CHARACTERS.find((p) => p.emojis === 'Luigi')!;
+  assert.ok(matchesAnswer('mario bros', mario));
+  assert.equal(mario.tag, '🎮 Videojuego');
+  const { send, last, games } = setup({ rng: () => 0.999 }); // último: un personaje de videojuego
+  await send(ANA, '!personaje');
+  const game = games.active(GROUP) as EmojiGame;
+  assert.equal(game.puzzle.tag, '🎮 Videojuego');
+  assert.match(last(), /Videojuego/);
+  await send(BETO, game.puzzle.answer);
+  assert.match(last(), /Correcto/);
 });

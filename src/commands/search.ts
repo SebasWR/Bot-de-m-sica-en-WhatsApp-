@@ -13,7 +13,7 @@ export const searchCommand: Command = {
       return;
     }
     await ctx.react('🔎');
-    const tracks = await ctx.services.music.search(ctx.text, 5);
+    const tracks = await ctx.services.music.searchAny(ctx.text, 5);
     if (tracks.length === 0) {
       await ctx.reply('😕 No encontré resultados para esa búsqueda.');
       return;
