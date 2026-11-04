@@ -34,6 +34,8 @@ export const config = {
   audioBitrate: str('AUDIO_BITRATE', '96k'),
   ytdlpPath: str('YTDLP_PATH', 'yt-dlp'),
   ffmpegPath: str('FFMPEG_PATH', 'ffmpeg'),
+  /** Cookies de YouTube (formato Netscape). Opcional: se usa solo si el archivo existe. */
+  cookiesFile: path.resolve(str('COOKIES_FILE', './cookies.txt')),
   logLevel: str('LOG_LEVEL', 'info'),
   pairingNumber: str('PAIRING_NUMBER', '').replace(/\D/g, ''),
 } as const;

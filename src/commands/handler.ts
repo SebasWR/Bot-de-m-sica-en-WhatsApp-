@@ -72,7 +72,10 @@ export async function handleText(
   } catch (err) {
     logger.error({ err, command: command.name }, 'Error ejecutando comando');
     await base.react('❌').catch(() => undefined);
-    await base.reply('💥 Ocurrió un error procesando tu pedido. Inténtalo de nuevo en un momento.').catch(() => undefined);
+    const userMessage = (err as { userMessage?: unknown })?.userMessage;
+    const text =
+      typeof userMessage === 'string' ? userMessage : '💥 Ocurrió un error procesando tu pedido. Inténtalo de nuevo en un momento.';
+    await base.reply(text).catch(() => undefined);
   }
   return true;
 }
