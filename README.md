@@ -71,8 +71,10 @@ Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una d
 | `!tateti [@rival \| bot] [facil\|normal\|dificil]` | `!ttt`, `!gato`, `!3enraya` | Tres en raya. En grupo: `@rival` lo reta, `bot` juega contra el bot, sin nada es un reto abierto. En privado siempre contra el bot |
 | `!4enraya [@rival \| bot] [nivel]` | `!conecta4`, `!c4` | 4 en raya (columnas 1–7), mismo sistema de retos |
 | `!aceptar` / `!rechazar` | `!si` / `!no` | Acepta o rechaza un reto pendiente |
-| `!ahorcado [palabra]` | `!hangman` | Adivinen la palabra entre todos: una letra por mensaje, o la palabra entera directamente cuando la sepan |
-| `!trivia` | `!pregunta`, `!quiz` | Pregunta con 4 opciones; un intento por persona, gana el primero que acierta |
+| `!ahorcado [en \| palabra]` | `!hangman` | Adivinen la palabra entre todos: una letra por mensaje, o la palabra entera directamente cuando la sepan. `!ahorcado en` = en inglés |
+| `!trivia [en]` | `!pregunta`, `!quiz` | Pregunta con 4 opciones; un intento por persona, gana el primero que acierta. `!trivia en` = en inglés |
+| `!emojianime` | `!adivinaanime`, `!anime` | Adiviná el anime por los emojis: el primero que escribe el nombre gana (`pista` da una ayuda) |
+| `!emojijuego` | `!adivinajuego`, `!videojuego` | Adiviná el videojuego por los emojis |
 | `!adivina` | `!numero` | Número secreto del 1 al 100, 8 intentos entre todos con pistas |
 | `!ppt <piedra\|papel\|tijera>` | `!rps` | Piedra, papel o tijera contra el bot |
 | `!rendirse` | `!salir`, `!saltar` | Termina la partida actual del chat |

@@ -13,11 +13,15 @@ import {
   measureCm,
   shipPercent,
 } from '../src/games/fun.js';
-import { Hangman } from '../src/games/hangman.js';
+import { Hangman, HangmanGame } from '../src/games/hangman.js';
 import { GameManager } from '../src/games/manager.js';
 import { fold, tag } from '../src/games/text.js';
 import { TicTacToe } from '../src/games/tictactoe.js';
 import { TriviaGame } from '../src/games/trivia.js';
+import { TRIVIA_QUESTIONS, TRIVIA_QUESTIONS_EN } from '../src/games/data/trivia.js';
+import { HANGMAN_WORDS, HANGMAN_WORDS_EN } from '../src/games/data/words.js';
+import { ANIME_EMOJIS, GAME_EMOJIS } from '../src/games/data/emojis.js';
+import { matchesAnswer } from '../src/games/emoji.js';
 import type { AudioService } from '../src/services/audio.js';
 import type { MusicService } from '../src/services/music.js';
 import type { GifService } from '../src/services/gifs.js';
@@ -386,4 +390,57 @@ test('!ayuda muestra secciones y !juegos solo los juegos', async () => {
   assert.doesNotMatch(last(), /!play/);
   assert.match(last(), /!ttt/);
   assert.match(last(), /Cómo se juega/);
+});
+
+test('trivia y ahorcado en inglés', async () => {
+  const { send, last, games } = setup();
+  await send(ANA, '!trivia en');
+  const trivia = games.active(GROUP) as TriviaGame;
+  assert.equal(trivia.lang, 'en');
+  assert.match(last(), /Answer with the letter/);
+  assert.ok(TRIVIA_QUESTIONS_EN.includes(trivia.question));
+  await send(ANA, '!rendirse');
+  await send(ANA, '!ahorcado ingles');
+  const hangman = games.active(GROUP) as HangmanGame;
+  assert.equal(hangman.lang, 'en');
+  assert.match(last(), /Type a letter/);
+  assert.ok(Object.values(HANGMAN_WORDS_EN).some((ws) => ws.includes(hangman.game.word)));
+});
+
+test('datos de juegos: sin repetidas y con 4 opciones distintas', () => {
+  for (const bank of [TRIVIA_QUESTIONS, TRIVIA_QUESTIONS_EN]) {
+    const qs = bank.map((q) => q.question);
+    assert.equal(new Set(qs).size, qs.length);
+    for (const q of bank) assert.equal(new Set(q.options).size, 4, q.question);
+  }
+  for (const bank of [HANGMAN_WORDS, HANGMAN_WORDS_EN])
+    for (const words of Object.values(bank)) for (const w of words) assert.match(w, /^[\p{L}]+$/u, w);
+  for (const p of [...ANIME_EMOJIS, ...GAME_EMOJIS]) assert.ok(matchesAnswer(p.answer, p), p.answer);
+});
+
+test('adiviná el anime por emojis: charla ignorada, pista y gana el primero', async () => {
+  const { send, last, games } = setup({ rng: () => 0 }); // primer anime: Naruto
+  await send(ANA, '!emojianime');
+  assert.match(last(), /🍥🦊🍜🥷/);
+  assert.equal(await send(BETO, 'jaja ni idea'), false, 'la charla no cuenta');
+  await send(BETO, 'pista');
+  assert.match(last(), /Empieza con \*N…\*/);
+  await send(BETO, '!anime bleach');
+  assert.match(last(), /No es \*bleach\*/);
+  await send(CARLA, 'naruto!');
+  assert.match(last(), /Correcto, @333! Era \*Naruto\*/);
+  assert.equal(games.active(GROUP), undefined);
+});
+
+test('adiviná el videojuego: alias y errores de tipeo', async () => {
+  const zelda = GAME_EMOJIS.find((p) => p.answer === 'The Legend of Zelda')!;
+  assert.ok(matchesAnswer('zelda', zelda));
+  assert.ok(matchesAnswer('legend of zelada', zelda));
+  assert.ok(!matchesAnswer('mario', zelda));
+  const pokemon = ANIME_EMOJIS.find((p) => p.answer === 'Pokémon')!;
+  assert.ok(matchesAnswer('POKEMON', pokemon));
+  const { send, last } = setup({ rng: () => 0 });
+  await send(ANA, '!emojijuego');
+  await send(ANA, '!rendirse');
+  assert.match(last(), /Era \*Super Mario\*/);
 });

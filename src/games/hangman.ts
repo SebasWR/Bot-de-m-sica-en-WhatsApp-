@@ -1,4 +1,5 @@
-import { HANGMAN_WORDS } from './data/words.js';
+import { HANGMAN_WORDS, HANGMAN_WORDS_EN } from './data/words.js';
+import type { Lang } from './lang.js';
 import type { ChatGame, PlayContext } from './manager.js';
 import { pick, type Rng } from './random.js';
 import { fold, tag } from './text.js';
@@ -64,7 +65,7 @@ export function isLetter(text: string): boolean {
 
 export class HangmanGame implements ChatGame {
   readonly id = 'ahorcado';
-  readonly label = '🪢 Ahorcado';
+  readonly label: string;
   readonly game: Hangman;
   readonly category: string;
 
@@ -73,10 +74,13 @@ export class HangmanGame implements ChatGame {
     private readonly prefix: string,
     rng: Rng,
     word?: { word: string; category: string },
+    readonly lang: Lang = 'es',
   ) {
+    this.label = lang === 'en' ? '🪢 Hangman (English)' : '🪢 Ahorcado';
+    const bank = lang === 'en' ? HANGMAN_WORDS_EN : HANGMAN_WORDS;
     const chosen = word ?? (() => {
-      const category = pick(rng, Object.keys(HANGMAN_WORDS));
-      return { category, word: pick(rng, HANGMAN_WORDS[category]!) };
+      const category = pick(rng, Object.keys(bank));
+      return { category, word: pick(rng, bank[category]!) };
     })();
     this.game = new Hangman(chosen.word);
     this.category = chosen.category;
@@ -87,10 +91,11 @@ export class HangmanGame implements ChatGame {
     if (isLetter(trimmed)) {
       const result = this.game.guessLetter(trimmed);
       if (result === 'repeated') {
-        await ctx.reply(`🔁 La *${trimmed.toUpperCase()}* ya se dijo.`);
+        await ctx.reply(this.t(`🔁 La *${trimmed.toUpperCase()}* ya se dijo.`, `🔁 *${trimmed.toUpperCase()}* was already said.`));
         return true;
       }
-      return this.afterGuess(ctx, result === 'hit' ? '✅ ¡Bien!' : `❌ No hay *${trimmed.toUpperCase()}*.`);
+      const up = trimmed.toUpperCase();
+      return this.afterGuess(ctx, result === 'hit' ? this.t('✅ ¡Bien!', '✅ Nice!') : this.t(`❌ No hay *${up}*.`, `❌ No *${up}*.`));
     }
     // Arriesgar la palabra: con el comando, o escribiéndola directamente en el chat.
     // Sin comando solo cuenta si tiene el mismo largo que la palabra, para no tomar
@@ -98,21 +103,32 @@ export class HangmanGame implements ChatGame {
     const sameLength = [...trimmed].length === [...this.game.word].length;
     if (/^[\p{L}]+$/u.test(trimmed) && (explicit || sameLength)) {
       const ok = this.game.guessWord(trimmed);
-      return this.afterGuess(ctx, ok ? '' : `❌ No es *${trimmed}*.`);
+      return this.afterGuess(ctx, ok ? '' : this.t(`❌ No es *${trimmed}*.`, `❌ It's not *${trimmed}*.`));
     }
     return false;
+  }
+
+  private t(es: string, en: string): string {
+    return this.lang === 'en' ? en : es;
   }
 
   private async afterGuess(ctx: PlayContext, note: string): Promise<boolean> {
     if (this.game.solved) {
       ctx.services.games.end(this.chatJid, this);
       ctx.services.db.addGameResult(this.chatJid, ctx.senderJid, this.id, 'win');
-      await ctx.reply(`🎉 ¡${tag(ctx.senderJid)} adivinó! La palabra era *${this.game.word.toUpperCase()}*.`, [ctx.senderJid]);
+      const w = this.game.word.toUpperCase();
+      await ctx.reply(
+        this.t(`🎉 ¡${tag(ctx.senderJid)} adivinó! La palabra era *${w}*.`, `🎉 ${tag(ctx.senderJid)} got it! The word was *${w}*.`),
+        [ctx.senderJid],
+      );
       return true;
     }
     if (this.game.lost) {
       ctx.services.games.end(this.chatJid, this);
-      await ctx.reply(`${note}\n\n${STAGES[MAX_MISTAKES]} ¡Ahorcado! La palabra era *${this.game.word.toUpperCase()}*.`);
+      const w = this.game.word.toUpperCase();
+      await ctx.reply(
+        `${note}\n\n${STAGES[MAX_MISTAKES]} ${this.t(`¡Ahorcado! La palabra era *${w}*.`, `Hanged! The word was *${w}*.`)}`,
+      );
       return true;
     }
     await ctx.reply(`${note}\n\n${this.status().text}`);
@@ -121,19 +137,20 @@ export class HangmanGame implements ChatGame {
 
   async onQuit(ctx: PlayContext): Promise<boolean> {
     ctx.services.games.end(this.chatJid, this);
-    await ctx.reply(`🏳️ Partida terminada. La palabra era *${this.game.word.toUpperCase()}*.`);
+    const w = this.game.word.toUpperCase();
+    await ctx.reply(this.t(`🏳️ Partida terminada. La palabra era *${w}*.`, `🏳️ Game over. The word was *${w}*.`));
     return true;
   }
 
   status(): { text: string } {
     const g = this.game;
-    const wrong = g.wrong.length ? `\n❌ Fallos: ${g.wrong.map((w) => w.toUpperCase()).join(', ')}` : '';
+    const wrong = g.wrong.length ? `\n❌ ${this.t('Fallos', 'Misses')}: ${g.wrong.map((w) => w.toUpperCase()).join(', ')}` : '';
     return {
       text:
-        `${this.label} · Pista: _${this.category}_\n\n` +
+        `${this.label} · ${this.t('Pista', 'Hint')}: _${this.category}_\n\n` +
         `\`${g.masked()}\`\n\n` +
-        `${STAGES[g.mistakes]} Vidas: ${'❤️'.repeat(MAX_MISTAKES - g.mistakes)}${'🖤'.repeat(g.mistakes)}${wrong}\n\n` +
-        `Escribe una letra, o la palabra entera si ya la sabes.`,
+        `${STAGES[g.mistakes]} ${this.t('Vidas', 'Lives')}: ${'❤️'.repeat(MAX_MISTAKES - g.mistakes)}${'🖤'.repeat(g.mistakes)}${wrong}\n\n` +
+        this.t('Escribe una letra, o la palabra entera si ya la sabes.', 'Type a letter, or the whole word if you know it.'),
     };
   }
 }

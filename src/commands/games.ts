@@ -1,7 +1,10 @@
 import { parseLevel, type BoardEngine } from '../games/board.js';
 import { ConnectFour } from '../games/connect4.js';
 import { BOT, DuelGame } from '../games/duel.js';
+import { ANIME_EMOJIS, GAME_EMOJIS, type EmojiPuzzle } from '../games/data/emojis.js';
+import { EmojiGame } from '../games/emoji.js';
 import { GuessGame } from '../games/guess.js';
+import { parseLang } from '../games/lang.js';
 import { HangmanGame } from '../games/hangman.js';
 import type { ChatGame } from '../games/manager.js';
 import { tag } from '../games/text.js';
@@ -145,11 +148,12 @@ export const hangmanCommand: Command = {
   name: 'ahorcado',
   aliases: ['hangman', 'ahorca'],
   category: 'juegos',
-  description: 'Adivinen la palabra letra a letra entre todos',
-  usage: '[palabra para arriesgar]',
+  description: 'Adivinen la palabra letra a letra entre todos (en inglés: !ahorcado en)',
+  usage: '[en | palabra para arriesgar]',
   async execute(ctx) {
     if (await handleActiveGame(ctx, 'ahorcado')) return;
-    await startGame(ctx, new HangmanGame(ctx.chatJid, ctx.prefix, ctx.services.games.random));
+    const lang = parseLang(ctx.text) ?? 'es';
+    await startGame(ctx, new HangmanGame(ctx.chatJid, ctx.prefix, ctx.services.games.random, undefined, lang));
   },
 };
 
@@ -157,12 +161,53 @@ export const triviaCommand: Command = {
   name: 'trivia',
   aliases: ['pregunta', 'quiz'],
   category: 'juegos',
-  description: 'Pregunta de cultura general: el primero que acierta gana',
+  description: 'Pregunta de cultura general: el primero que acierta gana (en inglés: !trivia en)',
+  usage: '[en]',
   async execute(ctx) {
     if (await handleActiveGame(ctx, 'trivia')) return;
-    await startGame(ctx, new TriviaGame(ctx.chatJid, ctx.prefix, ctx.isGroup, ctx.services.games.random));
+    const lang = parseLang(ctx.text) ?? 'es';
+    await startGame(ctx, new TriviaGame(ctx.chatJid, ctx.prefix, ctx.isGroup, ctx.services.games.random, undefined, lang));
   },
 };
+
+function emojiCommand(opts: {
+  name: string;
+  aliases: string[];
+  label: string;
+  description: string;
+  puzzles: readonly EmojiPuzzle[];
+}): Command {
+  return {
+    name: opts.name,
+    aliases: opts.aliases,
+    category: 'juegos',
+    description: opts.description,
+    usage: '[respuesta]',
+    async execute(ctx) {
+      if (await handleActiveGame(ctx, opts.name)) return;
+      await startGame(
+        ctx,
+        new EmojiGame(opts.name, opts.label, ctx.chatJid, ctx.prefix, ctx.services.games.random, opts.puzzles),
+      );
+    },
+  };
+}
+
+export const emojiAnimeCommand = emojiCommand({
+  name: 'emojianime',
+  aliases: ['adivinaanime', 'animeemoji', 'anime'],
+  label: '🎌 Adiviná el anime',
+  description: 'Adivinen el anime por los emojis: el primero que lo escribe gana',
+  puzzles: ANIME_EMOJIS,
+});
+
+export const emojiGameCommand = emojiCommand({
+  name: 'emojijuego',
+  aliases: ['adivinajuego', 'juegoemoji', 'videojuego'],
+  label: '🎮 Adiviná el videojuego',
+  description: 'Adivinen el videojuego por los emojis: el primero que lo escribe gana',
+  puzzles: GAME_EMOJIS,
+});
 
 export const guessCommand: Command = {
   name: 'adivina',
