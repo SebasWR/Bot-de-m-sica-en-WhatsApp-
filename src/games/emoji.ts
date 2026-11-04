@@ -137,7 +137,7 @@ export class EmojiGame implements ChatGame {
     const hint = this.hinted ? `\n💡 _${this.puzzle.hint}_` : '';
     return {
       text:
-        `${this.label}\n\n${this.question}${this.shown}${hint}\n\n` +
+        `${this.label}\n\n${this.question}${this.shown}${this.puzzle.tag ? ` _(${this.puzzle.tag})_` : ''}${hint}\n\n` +
         `Escriban el nombre en el chat: ¡el primero que acierte gana! ` +
         (this.hardcore
           ? `Sin pistas 💀. Para abandonar: *${this.prefix}rendirse*.`

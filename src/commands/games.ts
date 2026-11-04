@@ -1,7 +1,7 @@
 import { parseLevel, type BoardEngine } from '../games/board.js';
 import { ConnectFour } from '../games/connect4.js';
 import { BOT, DuelGame } from '../games/duel.js';
-import { ANIME_CHARACTERS, ANIME_EMOJIS, GAME_EMOJIS, parseDifficulty, type EmojiPuzzle } from '../games/data/emojis.js';
+import { ALL_CHARACTERS, ANIME_EMOJIS, GAME_EMOJIS, parseDifficulty, type EmojiPuzzle } from '../games/data/emojis.js';
 import { EmojiGame } from '../games/emoji.js';
 import { GuessGame } from '../games/guess.js';
 import { parseLang } from '../games/lang.js';
@@ -223,9 +223,9 @@ export const emojiGameCommand = emojiCommand({
 export const characterCommand = emojiCommand({
   name: 'personaje',
   aliases: ['adivinapersonaje', 'animepersonaje', 'quienes'],
-  label: '🎌 ¿De qué anime es?',
-  description: 'Les doy el nombre de un personaje y adivinan de qué anime es',
-  puzzles: ANIME_CHARACTERS,
+  label: '👤 ¿De dónde es este personaje?',
+  description: 'Les doy un personaje de anime o videojuego y adivinan de cuál es',
+  puzzles: ALL_CHARACTERS,
   question: '👤 Personaje: ',
 });
 
