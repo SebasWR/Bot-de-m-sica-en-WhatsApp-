@@ -454,4 +454,7 @@ test('¿de qué anime es? por nombre de personaje', async () => {
   assert.equal(games.active(GROUP), undefined);
   const names = ANIME_EMOJIS.map((p) => normalizeAnswer(p.answer));
   assert.equal(new Set(names).size, names.length, 'sin animes repetidos en emojis');
+  const chars = ANIME_CHARACTERS.map((p) => p.emojis);
+  assert.equal(new Set(chars).size, chars.length, 'sin personajes repetidos');
+  assert.ok(ANIME_CHARACTERS.length >= 150);
 });
