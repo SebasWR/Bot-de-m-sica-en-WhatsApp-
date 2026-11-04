@@ -6,9 +6,14 @@ export interface EmojiPuzzle {
   aliases?: readonly string[];
   /** Pista que se da si nadie la saca. */
   hint: string;
+  /** Dificultad (se asigna abajo según lo conocido que es el anime o juego). */
+  level?: Difficulty;
 }
 
-export const ANIME_EMOJIS: readonly EmojiPuzzle[] = [
+export type Difficulty = 'facil' | 'medio' | 'dificil' | 'hardcore';
+export const DIFFICULTIES: readonly Difficulty[] = ['facil', 'medio', 'dificil', 'hardcore'];
+
+const RAW_ANIME_EMOJIS: readonly EmojiPuzzle[] = [
   { emojis: '🍥🦊🍜🥷', answer: 'Naruto', hint: 'Ninja que quiere ser Hokage' },
   { emojis: '🏴‍☠️👒🍖🌊', answer: 'One Piece', hint: 'Piratas que buscan un tesoro' },
   { emojis: '🐉⚽⚽⚽⚽⚽⚽⚽', answer: 'Dragon Ball', aliases: ['dragon ball z', 'dragon ball super', 'dbz'], hint: 'Siete esferas que cumplen deseos' },
@@ -88,7 +93,7 @@ export const ANIME_EMOJIS: readonly EmojiPuzzle[] = [
   { emojis: '🦖🐉🧒💻', answer: 'Digimon', aliases: ['digimon adventure'], hint: 'Monstruos digitales' },
 ];
 
-export const GAME_EMOJIS: readonly EmojiPuzzle[] = [
+const RAW_GAME_EMOJIS: readonly EmojiPuzzle[] = [
   { emojis: '🍄👨‍🔧🏰👸', answer: 'Super Mario', aliases: ['mario', 'mario bros', 'super mario bros'], hint: 'Un plomero rescata a la princesa' },
   { emojis: '⛏️🟩🧟💥', answer: 'Minecraft', hint: 'Todo es de bloques' },
   { emojis: '🦔💨💍💙', answer: 'Sonic', aliases: ['sonic the hedgehog'], hint: 'Un erizo muy rápido' },
@@ -127,6 +132,20 @@ export const GAME_EMOJIS: readonly EmojiPuzzle[] = [
   { emojis: '🦖🦕🏃‍♂️🌵', answer: 'Dino de Chrome', aliases: ['dino', 'chrome dino', 'dinosaurio de chrome', 'el dinosaurio de google', 'dinosaurio'], hint: 'Aparece cuando no hay internet' },
   { emojis: '🔫👽🪖🛸', answer: 'Halo', hint: 'Master Chief' },
   { emojis: '🧙‍♂️💍🌋🌲', answer: 'Elden Ring', hint: 'Ser Señor del Círculo' },
+  { emojis: '🍓🏔️👧💨', answer: 'Celeste', hint: 'Escalar una montaña y vencer la ansiedad' },
+  { emojis: '💀🦴❤️🐐', answer: 'Undertale', hint: 'Un RPG donde podés no matar a nadie' },
+  { emojis: '☕🥤👊🎩', answer: 'Cuphead', hint: 'Dibujos de los años 30 y jefes durísimos' },
+  { emojis: '🔥😈🏛️🗡️', answer: 'Hades', hint: 'Escapar del inframundo griego' },
+  { emojis: '🔵🟠🎂🤖', answer: 'Portal', hint: 'La torta es mentira' },
+  { emojis: '⛏️🌳🧟‍♂️🌙', answer: 'Terraria', hint: 'Como Minecraft pero en 2D' },
+  { emojis: '🪐⏳🔭🪵', answer: 'Outer Wilds', hint: 'Un sistema solar que explota cada 22 minutos' },
+  { emojis: '🌊🏙️🤿👧', answer: 'BioShock', aliases: ['bioshock'], hint: 'Una ciudad bajo el mar' },
+  { emojis: '🛡️🔵⛏️🐸', answer: 'Shovel Knight', hint: 'Un caballero con una pala' },
+  { emojis: '⬛👦🕷️🌲', answer: 'Limbo', hint: 'Un nene en un mundo en blanco y negro' },
+  { emojis: '🫘👑🏃‍♂️🌈', answer: 'Fall Guys', hint: 'Frijolitos en una carrera de obstáculos' },
+  { emojis: '😈🔫🪖🔥', answer: 'Doom', hint: 'Matar demonios en Marte' },
+  { emojis: '🧑‍🚀🔧🏭🌍', answer: 'Factorio', hint: 'Fábricas automatizadas en otro planeta' },
+  { emojis: '🦊⚔️🔺🗝️', answer: 'Tunic', hint: 'Un zorrito en una aventura con manual secreto' },
 ];
 
 /** Personajes: se muestra el nombre y hay que adivinar de qué anime es. */
@@ -309,7 +328,81 @@ const MORE_CHARACTERS: [string, keyof typeof A][] = [
   ['Kazuma Satou', 'konosuba'], ['Aqua', 'konosuba'], ['Megumin', 'konosuba'],
 ];
 
+// ---- Dificultades: de lo más conocido (fácil) a lo más de nicho (hardcore).
+
+const ANIME_LEVELS: Record<Exclude<Difficulty, 'dificil'>, readonly string[]> = {
+  facil: [
+    'Naruto', 'Naruto Shippuden', 'One Piece', 'Dragon Ball', 'Dragon Ball Super', 'Pokémon', 'Death Note',
+    'Attack on Titan', 'Demon Slayer', 'My Hero Academia', 'One Punch Man', 'Captain Tsubasa', 'Sailor Moon',
+    'Yu-Gi-Oh!', 'Digimon', 'Beyblade', 'El viaje de Chihiro', 'Mi vecino Totoro', 'Saint Seiya',
+  ],
+  medio: [
+    'Jujutsu Kaisen', 'Chainsaw Man', 'Spy x Family', 'Bleach', 'Hunter x Hunter', 'Fullmetal Alchemist',
+    'Sword Art Online', 'Tokyo Ghoul', 'Fairy Tail', 'Black Clover', 'Boruto', 'Blue Lock', 'Haikyuu', 'Your Name',
+    "JoJo's Bizarre Adventure", 'Inuyasha', 'Solo Leveling', 'Dr. Stone', 'Ponyo', 'La princesa Mononoke',
+    'Kuroko no Basket', 'Code Geass',
+  ],
+  hardcore: [
+    'Dungeon Meshi', 'Kamisama Kiss', 'Toriko', 'Highschool of the Dead', 'K-On!', 'Uma Musume', 'Kimi ni Todoke',
+    'Hellsing', 'Trigun', 'Akira', 'Classroom of the Elite', 'Komi-san', 'Food Wars',
+  ],
+};
+
+const GAME_LEVELS: Record<Exclude<Difficulty, 'dificil'>, readonly string[]> = {
+  facil: [
+    'Super Mario', 'Minecraft', 'Sonic', 'Fortnite', 'Tetris', 'Pac-Man', 'Among Us', 'Roblox', 'Angry Birds',
+    'Candy Crush', 'Free Fire', 'Subway Surfers', 'Mario Kart', 'Dino de Chrome', 'GTA', 'Fall Guys',
+  ],
+  medio: [
+    'The Legend of Zelda', 'Rocket League', 'Counter-Strike', 'Plants vs Zombies', 'Resident Evil', 'Donkey Kong',
+    'Clash Royale', 'Clash of Clans', "Marvel's Spider-Man", 'God of War', 'Street Fighter', 'Mortal Kombat',
+    'Kirby', 'Halo', 'The Last of Us', 'Doom',
+  ],
+  hardcore: ['Outer Wilds', 'Shovel Knight', 'Factorio', 'Tunic', 'Limbo', 'BioShock', 'Mega Man', 'Hay Day'],
+};
+
+/** El que no figura en ninguna lista es "difícil". */
+function levelOf(answer: string, table: Record<Exclude<Difficulty, 'dificil'>, readonly string[]>): Difficulty {
+  for (const level of ['facil', 'medio', 'hardcore'] as const) if (table[level].includes(answer)) return level;
+  return 'dificil';
+}
+
+function harder(level: Difficulty): Difficulty {
+  return DIFFICULTIES[Math.min(DIFFICULTIES.indexOf(level) + 1, DIFFICULTIES.length - 1)]!;
+}
+
+export const ANIME_EMOJIS: readonly EmojiPuzzle[] = RAW_ANIME_EMOJIS.map((p) => ({ ...p, level: levelOf(p.answer, ANIME_LEVELS) }));
+export const GAME_EMOJIS: readonly EmojiPuzzle[] = RAW_GAME_EMOJIS.map((p) => ({ ...p, level: levelOf(p.answer, GAME_LEVELS) }));
+
+/** Protagonistas: misma dificultad que su anime. Secundarios: un nivel más. */
 export const ANIME_CHARACTERS: readonly EmojiPuzzle[] = [
-  ...BASE_CHARACTERS,
-  ...MORE_CHARACTERS.map(([name, anime]): EmojiPuzzle => ({ emojis: name, ...A[anime] })),
+  ...BASE_CHARACTERS.map((p) => ({ ...p, level: levelOf(p.answer, ANIME_LEVELS) })),
+  ...MORE_CHARACTERS.map(([name, anime]): EmojiPuzzle => ({
+    emojis: name,
+    ...A[anime],
+    level: harder(levelOf(A[anime].answer, ANIME_LEVELS)),
+  })),
 ];
+
+/** Las de un nivel. Hardcore también usa las difíciles (pero se muestran con menos emojis y sin pista). */
+export function puzzlesFor(puzzles: readonly EmojiPuzzle[], level: Difficulty | null): readonly EmojiPuzzle[] {
+  if (!level) return puzzles;
+  const pool = puzzles.filter((p) => p.level === level || (level === 'hardcore' && p.level === 'dificil'));
+  return pool.length > 0 ? pool : puzzles;
+}
+
+export function parseDifficulty(text: string | undefined): Difficulty | null {
+  const t = (text ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (['facil', 'easy', 'f'].includes(t)) return 'facil';
+  if (['medio', 'media', 'normal', 'medium', 'm'].includes(t)) return 'medio';
+  if (['dificil', 'hard', 'd'].includes(t)) return 'dificil';
+  if (['hardcore', 'extremo', 'imposible', 'hc', 'h'].includes(t)) return 'hardcore';
+  return null;
+}
+
+export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  facil: '🟢 Fácil',
+  medio: '🟡 Medio',
+  dificil: '🔴 Difícil',
+  hardcore: '💀 Hardcore',
+};

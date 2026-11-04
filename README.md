@@ -73,13 +73,15 @@ Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una d
 | `!aceptar` / `!rechazar` | `!si` / `!no` | Acepta o rechaza un reto pendiente |
 | `!ahorcado [en \| palabra]` | `!hangman` | Adivinen la palabra entre todos: una letra por mensaje, o la palabra entera directamente cuando la sepan. `!ahorcado en` = en inglés |
 | `!trivia [en]` | `!pregunta`, `!quiz` | Pregunta con 4 opciones; un intento por persona, gana el primero que acierta. `!trivia en` = en inglés |
-| `!emojianime` | `!adivinaanime`, `!anime` | Adiviná el anime por los emojis: el primero que escribe el nombre gana (`pista` da una ayuda) |
-| `!personaje` | `!adivinapersonaje` | Les doy el nombre de un personaje y adivinan de qué anime es |
-| `!emojijuego` | `!adivinajuego`, `!videojuego` | Adiviná el videojuego por los emojis |
+| `!emojianime [nivel]` | `!adivinaanime`, `!anime` | Adiviná el anime por los emojis: el primero que escribe el nombre gana (`pista` da una ayuda) |
+| `!personaje [nivel]` | `!adivinapersonaje` | Les doy el nombre de un personaje y adivinan de qué anime es |
+| `!emojijuego [nivel]` | `!adivinajuego`, `!videojuego` | Adiviná el videojuego por los emojis |
 | `!adivina` | `!numero` | Número secreto del 1 al 100, 8 intentos entre todos con pistas |
 | `!ppt <piedra\|papel\|tijera>` | `!rps` | Piedra, papel o tijera contra el bot |
 | `!rendirse` | `!salir`, `!saltar` | Termina la partida actual del chat |
 | `!puntos [juego]` | `!puntaje`, `!tabla` | Ranking de victorias del chat (todos los juegos o uno) |
+
+**Dificultad** (`!emojianime`, `!emojijuego`, `!personaje`): `facil`, `medio`, `dificil` o `hardcore`. Va de lo más conocido a lo más de nicho; en hardcore no hay pistas y en los de emojis se muestra solo la mitad. Sin nivel, sale cualquiera.
 
 **Cómo se juega:** después de empezar una partida se responde en el chat sin prefijo: un número para tateti, 4 en raya y adivina; una letra (o la palabra entera) para el ahorcado; `A`–`D` para la trivia. Solo hay una partida por chat y se cancela sola tras 15 minutos sin jugadas. Las victorias se guardan en SQLite por chat.
 

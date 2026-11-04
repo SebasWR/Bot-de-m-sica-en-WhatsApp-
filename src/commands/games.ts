@@ -1,7 +1,7 @@
 import { parseLevel, type BoardEngine } from '../games/board.js';
 import { ConnectFour } from '../games/connect4.js';
 import { BOT, DuelGame } from '../games/duel.js';
-import { ANIME_CHARACTERS, ANIME_EMOJIS, GAME_EMOJIS, type EmojiPuzzle } from '../games/data/emojis.js';
+import { ANIME_CHARACTERS, ANIME_EMOJIS, GAME_EMOJIS, parseDifficulty, type EmojiPuzzle } from '../games/data/emojis.js';
 import { EmojiGame } from '../games/emoji.js';
 import { GuessGame } from '../games/guess.js';
 import { parseLang } from '../games/lang.js';
@@ -183,21 +183,22 @@ function emojiCommand(opts: {
     aliases: opts.aliases,
     category: 'juegos',
     description: opts.description,
-    usage: '[respuesta]',
+    usage: '[facil | medio | dificil | hardcore]',
     async execute(ctx) {
       if (await handleActiveGame(ctx, opts.name)) return;
       await startGame(
         ctx,
-        new EmojiGame(
-          opts.name,
-          opts.label,
-          ctx.chatJid,
-          ctx.prefix,
-          ctx.services.games.random,
-          opts.puzzles,
-          undefined,
-          opts.question,
-        ),
+        new EmojiGame({
+          id: opts.name,
+          label: opts.label,
+          chatJid: ctx.chatJid,
+          prefix: ctx.prefix,
+          rng: ctx.services.games.random,
+          puzzles: opts.puzzles,
+          level: parseDifficulty(ctx.text),
+          question: opts.question,
+          trimEmojis: !opts.question,
+        }),
       );
     },
   };

@@ -41,7 +41,8 @@ export function createHelpCommand(registry: CommandRegistry): Command {
       const howTo =
         only === 'juegos'
           ? `\n\n*¿Cómo se juega?* Empieza una partida con su comando y luego responde en el chat: ` +
-            `números para tateti/4 en raya/adivina, una letra para el ahorcado, A-D para la trivia, y el nombre en los de emojis (o *pista*). ` +
+            `números para tateti/4 en raya/adivina, una letra para el ahorcado, A-D para la trivia, y el nombre en los de emojis y *personaje* (o *pista*). ` +
+            `Esos tres tienen dificultad: *${ctx.prefix}emojianime facil|medio|dificil|hardcore*. ` +
             `Trivia y ahorcado en inglés: *${ctx.prefix}trivia en*, *${ctx.prefix}ahorcado en*. ` +
             `Una partida por chat; *${ctx.prefix}rendirse* la termina.`
           : '';

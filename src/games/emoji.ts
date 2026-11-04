@@ -1,4 +1,4 @@
-import type { EmojiPuzzle } from './data/emojis.js';
+import { DIFFICULTY_LABEL, puzzlesFor, type Difficulty, type EmojiPuzzle } from './data/emojis.js';
 import type { ChatGame, PlayContext } from './manager.js';
 import { pick, type Rng } from './random.js';
 import { fold, tag } from './text.js';
@@ -43,25 +43,61 @@ export function matchesAnswer(guess: string, puzzle: EmojiPuzzle): boolean {
  */
 export class EmojiGame implements ChatGame {
   readonly puzzle: EmojiPuzzle;
+  readonly id: string;
+  readonly label: string;
+  readonly level: Difficulty | null;
+  private readonly chatJid: string;
+  private readonly prefix: string;
+  /** Texto que acompaña a la pista principal (los emojis o el nombre del personaje). */
+  private readonly question: string;
+  /** Si es true, en hardcore se muestra solo la mitad de los emojis. */
+  private readonly trimEmojis: boolean;
   private hinted = false;
 
-  constructor(
-    readonly id: string,
-    readonly label: string,
-    private readonly chatJid: string,
-    private readonly prefix: string,
-    rng: Rng,
-    puzzles: readonly EmojiPuzzle[],
-    puzzle?: EmojiPuzzle,
-    /** Texto que acompaña a la pista principal (los emojis o el nombre del personaje). */
-    private readonly question = '',
-  ) {
-    this.puzzle = puzzle ?? pick(rng, puzzles);
+  constructor(opts: {
+    id: string;
+    label: string;
+    chatJid: string;
+    prefix: string;
+    rng: Rng;
+    puzzles: readonly EmojiPuzzle[];
+    level?: Difficulty | null;
+    puzzle?: EmojiPuzzle;
+    question?: string;
+    trimEmojis?: boolean;
+  }) {
+    this.id = opts.id;
+    this.chatJid = opts.chatJid;
+    this.prefix = opts.prefix;
+    this.level = opts.level ?? null;
+    this.label = this.level ? `${opts.label} · ${DIFFICULTY_LABEL[this.level]}` : opts.label;
+    this.question = opts.question ?? '';
+    this.trimEmojis = opts.trimEmojis ?? false;
+    this.puzzle = opts.puzzle ?? pick(opts.rng, puzzlesFor(opts.puzzles, this.level));
+  }
+
+  private get hardcore(): boolean {
+    return this.level === 'hardcore';
+  }
+
+  /** Lo que se muestra: en hardcore, solo la mitad de los emojis (redondeando para arriba, mínimo 2). */
+  get shown(): string {
+    if (!this.hardcore || !this.trimEmojis) return this.puzzle.emojis;
+    const parts = [...new Intl.Segmenter('es', { granularity: 'grapheme' }).segment(this.puzzle.emojis)].map((p) => p.segment);
+    return parts.slice(0, Math.max(2, Math.ceil(parts.length / 2))).join('');
+  }
+
+  private get again(): string {
+    return `${this.prefix}${this.id}${this.level ? ` ${this.level}` : ''}`;
   }
 
   async onText(text: string, ctx: PlayContext, explicit: boolean): Promise<boolean> {
     const trimmed = text.trim();
     if (/^(pista|hint|ayuda)$/i.test(trimmed)) {
+      if (this.hardcore) {
+        await ctx.reply('💀 En hardcore no hay pistas.');
+        return true;
+      }
       this.hinted = true;
       await ctx.reply(`💡 Pista: _${this.puzzle.hint}_\nEmpieza con *${this.firstLetters()}*`);
       return true;
@@ -71,7 +107,7 @@ export class EmojiGame implements ChatGame {
       ctx.services.db.addGameResult(this.chatJid, ctx.senderJid, this.id, 'win');
       await ctx.react('✅');
       await ctx.reply(
-        `🎉 ¡Correcto, ${tag(ctx.senderJid)}! Era *${this.puzzle.answer}* ${this.puzzle.emojis}\nOtra: *${this.prefix}${this.id}*`,
+        `🎉 ¡Correcto, ${tag(ctx.senderJid)}! Era *${this.puzzle.answer}* ${this.puzzle.emojis}\nOtra: *${this.again}*`,
         [ctx.senderJid],
       );
       return true;
@@ -79,7 +115,7 @@ export class EmojiGame implements ChatGame {
     // En el chat normal, lo que no es la respuesta se ignora (puede ser charla).
     if (!explicit) return false;
     await ctx.react('❌');
-    await ctx.reply(`❌ No es *${trimmed}*. Seguí intentando o escribí *pista*.`);
+    await ctx.reply(`❌ No es *${trimmed}*. ${this.hardcore ? 'Seguí intentando.' : 'Seguí intentando o escribí *pista*.'}`);
     return true;
   }
 
@@ -93,7 +129,7 @@ export class EmojiGame implements ChatGame {
 
   async onQuit(ctx: PlayContext): Promise<boolean> {
     ctx.services.games.end(this.chatJid, this);
-    await ctx.reply(`🏳️ Nadie la sacó. Era *${this.puzzle.answer}* ${this.puzzle.emojis}\nOtra: *${this.prefix}${this.id}*`);
+    await ctx.reply(`🏳️ Nadie la sacó. Era *${this.puzzle.answer}* ${this.puzzle.emojis}\nOtra: *${this.again}*`);
     return true;
   }
 
@@ -101,9 +137,11 @@ export class EmojiGame implements ChatGame {
     const hint = this.hinted ? `\n💡 _${this.puzzle.hint}_` : '';
     return {
       text:
-        `${this.label}\n\n${this.question}${this.puzzle.emojis}${hint}\n\n` +
+        `${this.label}\n\n${this.question}${this.shown}${hint}\n\n` +
         `Escriban el nombre en el chat: ¡el primero que acierte gana! ` +
-        `Si no sale, escriban *pista* o *${this.prefix}rendirse*.`,
+        (this.hardcore
+          ? `Sin pistas 💀. Para abandonar: *${this.prefix}rendirse*.`
+          : `Si no sale, escriban *pista* o *${this.prefix}rendirse*.`),
     };
   }
 }

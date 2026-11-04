@@ -20,8 +20,8 @@ import { TicTacToe } from '../src/games/tictactoe.js';
 import { TriviaGame } from '../src/games/trivia.js';
 import { TRIVIA_QUESTIONS, TRIVIA_QUESTIONS_EN } from '../src/games/data/trivia.js';
 import { HANGMAN_WORDS, HANGMAN_WORDS_EN } from '../src/games/data/words.js';
-import { ANIME_CHARACTERS, ANIME_EMOJIS, GAME_EMOJIS } from '../src/games/data/emojis.js';
-import { matchesAnswer, normalizeAnswer } from '../src/games/emoji.js';
+import { ANIME_CHARACTERS, ANIME_EMOJIS, DIFFICULTIES, GAME_EMOJIS, parseDifficulty } from '../src/games/data/emojis.js';
+import { EmojiGame, matchesAnswer, normalizeAnswer } from '../src/games/emoji.js';
 import type { AudioService } from '../src/services/audio.js';
 import type { MusicService } from '../src/services/music.js';
 import type { GifService } from '../src/services/gifs.js';
@@ -457,4 +457,31 @@ test('¿de qué anime es? por nombre de personaje', async () => {
   const chars = ANIME_CHARACTERS.map((p) => p.emojis);
   assert.equal(new Set(chars).size, chars.length, 'sin personajes repetidos');
   assert.ok(ANIME_CHARACTERS.length >= 150);
+});
+
+test('dificultad: cada nivel tiene contenido y hardcore no da pistas', async () => {
+  for (const bank of [ANIME_EMOJIS, GAME_EMOJIS, ANIME_CHARACTERS])
+    for (const level of DIFFICULTIES) assert.ok(bank.filter((p) => p.level === level).length >= 5, level);
+  assert.equal(parseDifficulty('Difícil'), 'dificil');
+  assert.equal(parseDifficulty('hardcore'), 'hardcore');
+  assert.equal(parseDifficulty('naruto'), null);
+
+  const { send, last, games } = setup({ rng: () => 0 });
+  await send(ANA, '!emojianime facil');
+  const easy = games.active(GROUP) as EmojiGame;
+  assert.equal(easy.puzzle.level, 'facil');
+  assert.match(last(), /Fácil/);
+  await send(ANA, '!rendirse');
+  assert.match(last(), /emojianime facil/);
+
+  await send(ANA, '!emojianime hardcore');
+  const hc = games.active(GROUP) as EmojiGame;
+  assert.ok(['dificil', 'hardcore'].includes(hc.puzzle.level!));
+  assert.ok(hc.shown.length < hc.puzzle.emojis.length, 'muestra menos emojis');
+  await send(BETO, 'pista');
+  assert.match(last(), /no hay pistas/);
+  await send(ANA, '!rendirse');
+
+  await send(ANA, '!personaje medio');
+  assert.equal((games.active(GROUP) as EmojiGame).puzzle.level, 'medio');
 });
