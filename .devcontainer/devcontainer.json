@@ -1,0 +1,8 @@
+{
+  "name": "Bot de música WhatsApp",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+  "postCreateCommand": "bash .devcontainer/preparar.sh",
+  "customizations": {
+    "codespaces": { "openFiles": ["CODESPACES.md"] }
+  }
+}

@@ -59,8 +59,19 @@ export async function connectToWhatsApp(handlers: ConnectionHandlers, attempt = 
       if (config.pairingNumber && !state.creds.registered && !pairingRequested) {
         pairingRequested = true;
         try {
-          const code = await sock.requestPairingCode(config.pairingNumber);
-          logger.info(`Código de emparejamiento: ${code} (WhatsApp → Dispositivos vinculados → Vincular con número)`);
+          const raw = await sock.requestPairingCode(config.pairingNumber);
+          const code = raw.length === 8 ? `${raw.slice(0, 4)}-${raw.slice(4)}` : raw;
+          logger.info(
+            [
+              '',
+              '==============================================',
+              `   CÓDIGO PARA VINCULAR:   ${code}`,
+              '==============================================',
+              'En el celular del bot: WhatsApp → ⋮ → Dispositivos vinculados →',
+              '"Vincular un dispositivo" → "Vincular con el número de teléfono".',
+              'Tenés unos 2 minutos. Si se vence, aparece uno nuevo solo.',
+            ].join('\n'),
+          );
         } catch (err) {
           logger.error({ err }, 'No se pudo pedir el código de emparejamiento');
         }
@@ -77,16 +88,27 @@ export async function connectToWhatsApp(handlers: ConnectionHandlers, attempt = 
 
     if (connection === 'close') {
       const code = statusCodeOf(lastDisconnect?.error);
-      if (code === DisconnectReason.loggedOut) {
-        logger.error(
-          `Sesión cerrada desde el teléfono. Borra la carpeta ${config.authDir} y reinicia el bot para escanear un QR nuevo.`,
+      const loggedOut = code === DisconnectReason.loggedOut;
+      const restartAfterPairing = code === DisconnectReason.restartRequired;
+
+      // Si la vinculación quedó a medias (el código se venció o falló), Baileys guardó
+      // un "me" sin registrar y al reconectar intenta loguearse → WhatsApp responde 401
+      // y queda en bucle. Lo mismo si cerraron la sesión desde el teléfono. En ambos
+      // casos empezamos de cero con una sesión limpia y un código nuevo.
+      if (loggedOut || (!state.creds.registered && !restartAfterPairing)) {
+        sock.ev.off('creds.update', saveCreds);
+        await fs.rm(config.authDir, { recursive: true, force: true }).catch(() => {});
+        logger.warn(
+          loggedOut
+            ? 'La sesión se cerró desde el teléfono. Empiezo de cero y te doy un código nuevo.'
+            : 'La vinculación no se completó. Pido un código nuevo…',
         );
-        process.exit(1);
       }
-      const delay = Math.min(30_000, 1_000 * 2 ** attempt);
-      logger.warn({ code, delay }, 'Conexión cerrada, reconectando...');
+
+      const delay = restartAfterPairing ? 500 : Math.min(30_000, 2_000 * 2 ** Math.min(attempt, 4));
+      if (!restartAfterPairing) logger.warn({ code, delay }, 'Conexión cerrada, reconectando...');
       setTimeout(() => {
-        connectToWhatsApp(handlers, attempt + 1).catch((err) => {
+        connectToWhatsApp(handlers, restartAfterPairing ? 0 : attempt + 1).catch((err) => {
           logger.fatal({ err }, 'No se pudo reconectar');
           process.exit(1);
         });

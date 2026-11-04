@@ -12,9 +12,9 @@ Bot de WhatsApp para buscar, convertir y enviar música directamente desde el ch
 
 O simplemente Docker, que ya trae todo.
 
-### 📱 En el celular (Android, sin PC)
+### 📱 Desde el celular, sin PC (GitHub Codespaces)
 
-Mirá [TERMUX.md](TERMUX.md): se instala con una línea en Termux y se prende/apaga con un botón en la pantalla de inicio.
+Mirá [CODESPACES.md](CODESPACES.md): se abre un link, se pega un comando y aparece el código para vincular.
 
 ### Con Docker (recomendado para VPS)
 
