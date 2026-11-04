@@ -20,8 +20,8 @@ import { TicTacToe } from '../src/games/tictactoe.js';
 import { TriviaGame } from '../src/games/trivia.js';
 import { TRIVIA_QUESTIONS, TRIVIA_QUESTIONS_EN } from '../src/games/data/trivia.js';
 import { HANGMAN_WORDS, HANGMAN_WORDS_EN } from '../src/games/data/words.js';
-import { ANIME_EMOJIS, GAME_EMOJIS } from '../src/games/data/emojis.js';
-import { matchesAnswer } from '../src/games/emoji.js';
+import { ANIME_CHARACTERS, ANIME_EMOJIS, GAME_EMOJIS } from '../src/games/data/emojis.js';
+import { matchesAnswer, normalizeAnswer } from '../src/games/emoji.js';
 import type { AudioService } from '../src/services/audio.js';
 import type { MusicService } from '../src/services/music.js';
 import type { GifService } from '../src/services/gifs.js';
@@ -415,7 +415,7 @@ test('datos de juegos: sin repetidas y con 4 opciones distintas', () => {
   }
   for (const bank of [HANGMAN_WORDS, HANGMAN_WORDS_EN])
     for (const words of Object.values(bank)) for (const w of words) assert.match(w, /^[\p{L}]+$/u, w);
-  for (const p of [...ANIME_EMOJIS, ...GAME_EMOJIS]) assert.ok(matchesAnswer(p.answer, p), p.answer);
+  for (const p of [...ANIME_EMOJIS, ...GAME_EMOJIS, ...ANIME_CHARACTERS]) assert.ok(matchesAnswer(p.answer, p), p.answer);
 });
 
 test('adiviná el anime por emojis: charla ignorada, pista y gana el primero', async () => {
@@ -443,4 +443,15 @@ test('adiviná el videojuego: alias y errores de tipeo', async () => {
   await send(ANA, '!emojijuego');
   await send(ANA, '!rendirse');
   assert.match(last(), /Era \*Super Mario\*/);
+});
+
+test('¿de qué anime es? por nombre de personaje', async () => {
+  const { send, last, games } = setup({ rng: () => 0 }); // Monkey D. Luffy
+  await send(ANA, '!personaje');
+  assert.match(last(), /Personaje: Monkey D\. Luffy/);
+  await send(BETO, 'ONE PIECE');
+  assert.match(last(), /Correcto, @222! Era \*One Piece\*/);
+  assert.equal(games.active(GROUP), undefined);
+  const names = ANIME_EMOJIS.map((p) => normalizeAnswer(p.answer));
+  assert.equal(new Set(names).size, names.length, 'sin animes repetidos en emojis');
 });

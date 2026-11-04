@@ -74,6 +74,7 @@ Hay un tiempo de espera entre descargas por usuario (`COOLDOWN_SECONDS`) y una d
 | `!ahorcado [en \| palabra]` | `!hangman` | Adivinen la palabra entre todos: una letra por mensaje, o la palabra entera directamente cuando la sepan. `!ahorcado en` = en inglés |
 | `!trivia [en]` | `!pregunta`, `!quiz` | Pregunta con 4 opciones; un intento por persona, gana el primero que acierta. `!trivia en` = en inglés |
 | `!emojianime` | `!adivinaanime`, `!anime` | Adiviná el anime por los emojis: el primero que escribe el nombre gana (`pista` da una ayuda) |
+| `!personaje` | `!adivinapersonaje` | Les doy el nombre de un personaje y adivinan de qué anime es |
 | `!emojijuego` | `!adivinajuego`, `!videojuego` | Adiviná el videojuego por los emojis |
 | `!adivina` | `!numero` | Número secreto del 1 al 100, 8 intentos entre todos con pistas |
 | `!ppt <piedra\|papel\|tijera>` | `!rps` | Piedra, papel o tijera contra el bot |

@@ -53,6 +53,8 @@ export class EmojiGame implements ChatGame {
     rng: Rng,
     puzzles: readonly EmojiPuzzle[],
     puzzle?: EmojiPuzzle,
+    /** Texto que acompaña a la pista principal (los emojis o el nombre del personaje). */
+    private readonly question = '',
   ) {
     this.puzzle = puzzle ?? pick(rng, puzzles);
   }
@@ -99,7 +101,7 @@ export class EmojiGame implements ChatGame {
     const hint = this.hinted ? `\n💡 _${this.puzzle.hint}_` : '';
     return {
       text:
-        `${this.label}\n\n${this.puzzle.emojis}${hint}\n\n` +
+        `${this.label}\n\n${this.question}${this.puzzle.emojis}${hint}\n\n` +
         `Escriban el nombre en el chat: ¡el primero que acierte gana! ` +
         `Si no sale, escriban *pista* o *${this.prefix}rendirse*.`,
     };

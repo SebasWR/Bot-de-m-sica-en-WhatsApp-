@@ -1,7 +1,7 @@
 import { parseLevel, type BoardEngine } from '../games/board.js';
 import { ConnectFour } from '../games/connect4.js';
 import { BOT, DuelGame } from '../games/duel.js';
-import { ANIME_EMOJIS, GAME_EMOJIS, type EmojiPuzzle } from '../games/data/emojis.js';
+import { ANIME_CHARACTERS, ANIME_EMOJIS, GAME_EMOJIS, type EmojiPuzzle } from '../games/data/emojis.js';
 import { EmojiGame } from '../games/emoji.js';
 import { GuessGame } from '../games/guess.js';
 import { parseLang } from '../games/lang.js';
@@ -176,6 +176,7 @@ function emojiCommand(opts: {
   label: string;
   description: string;
   puzzles: readonly EmojiPuzzle[];
+  question?: string;
 }): Command {
   return {
     name: opts.name,
@@ -187,7 +188,16 @@ function emojiCommand(opts: {
       if (await handleActiveGame(ctx, opts.name)) return;
       await startGame(
         ctx,
-        new EmojiGame(opts.name, opts.label, ctx.chatJid, ctx.prefix, ctx.services.games.random, opts.puzzles),
+        new EmojiGame(
+          opts.name,
+          opts.label,
+          ctx.chatJid,
+          ctx.prefix,
+          ctx.services.games.random,
+          opts.puzzles,
+          undefined,
+          opts.question,
+        ),
       );
     },
   };
@@ -207,6 +217,15 @@ export const emojiGameCommand = emojiCommand({
   label: '🎮 Adiviná el videojuego',
   description: 'Adivinen el videojuego por los emojis: el primero que lo escribe gana',
   puzzles: GAME_EMOJIS,
+});
+
+export const characterCommand = emojiCommand({
+  name: 'personaje',
+  aliases: ['adivinapersonaje', 'animepersonaje', 'quienes'],
+  label: '🎌 ¿De qué anime es?',
+  description: 'Les doy el nombre de un personaje y adivinan de qué anime es',
+  puzzles: ANIME_CHARACTERS,
+  question: '👤 Personaje: ',
 });
 
 export const guessCommand: Command = {
